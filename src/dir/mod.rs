@@ -1,5 +1,8 @@
 //! Direction enumerations.
 
+pub mod map;
+pub mod set;
+
 /// A positive or negative value
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(i8)]
@@ -25,7 +28,7 @@ impl Cardinal {
     pub const fn index(self) -> u8 {
         self as u8
     }
-    /// Convert an index to a cardinal direction, using the ordering specified in [`index`].
+    /// Convert an index to a cardinal direction, using the ordering specified in [`index`](Self::index).
     #[inline(always)]
     pub const fn from_index(index: u8) -> Self {
         match index {
@@ -36,7 +39,7 @@ impl Cardinal {
             _ => panic!("Cardinal index out of bounds"),
         }
     }
-    /// Attempt to convert an index to a cardinal direction, using the ordering specified in [`index`].
+    /// Attempt to convert an index to a cardinal direction, using the ordering specified in [`index`](Self::index).
     #[inline(always)]
     pub const fn try_from_index(index: u8) -> Option<Self> {
         match index {
@@ -104,7 +107,7 @@ impl Ordinal {
     pub const fn index(self) -> u8 {
         self as u8
     }
-    /// Convert an index to a cardinal direction, using the ordering specified in [`index`].
+    /// Convert an index to a cardinal direction, using the ordering specified in [`index`](Self::index).
     #[inline(always)]
     pub const fn from_index(index: u8) -> Self {
         match index {
@@ -115,7 +118,7 @@ impl Ordinal {
             _ => panic!("Ordinal index out of bounds"),
         }
     }
-    /// Attempt to convert an index to a cardinal direction, using the ordering specified in [`index`].
+    /// Attempt to convert an index to a cardinal direction, using the ordering specified in [`index`](Self::index).
     #[inline(always)]
     pub const fn try_from_index(index: u8) -> Option<Self> {
         match index {
@@ -311,4 +314,12 @@ impl From<Ordinal> for Direction {
             Ordinal::NW => Self::NW,
         }
     }
+}
+
+/// A type that can be converted to and from indices.
+pub trait Enum {
+    /// Convert this value into an index.
+    fn into_enum_index(self) -> usize;
+    /// Take an index from [`into_enum_index`](Self::into_enum_index) and convert it back to this.
+    fn from_enum_index(idx: usize) -> Self;
 }

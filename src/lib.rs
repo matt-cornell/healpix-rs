@@ -1,5 +1,9 @@
+mod coords;
 pub mod dir;
+pub mod geo;
 pub mod zoc;
+
+pub use coords::LonLat;
 
 pub const MAX_DEPTH: u8 = 29;
 

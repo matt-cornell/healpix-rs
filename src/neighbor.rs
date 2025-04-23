@@ -1,3 +1,5 @@
+//! Functions relating to the neighboring edges.
+
 use crate::dir::PosOrNeg;
 use crate::dir::{Cardinal, Direction, Ordinal, map::DirectionMap};
 use crate::zoc::{ZOrderCurve, get_zoc};

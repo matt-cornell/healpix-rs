@@ -2,7 +2,7 @@ pub mod checked;
 pub mod coords;
 pub mod dir;
 pub mod geo;
-pub mod hash;
+mod hash;
 pub mod neighbor;
 pub mod proj;
 pub mod unchecked;
@@ -131,6 +131,7 @@ const LAYERS: [Layer; 30] = [
     Layer::new(29, ZOC::LARGE),
 ];
 
+/// Get the [`Layer`] corresponding to the given depth.
 pub fn get(depth: u8) -> &'static Layer {
     &LAYERS[depth as usize]
 }
@@ -223,6 +224,7 @@ impl Layer {
         }
     }
 
+    /// Get the [`Layer`] corresponding to the given depth.
     pub const fn get(depth: u8) -> &'static Layer {
         &LAYERS[depth as usize]
     }

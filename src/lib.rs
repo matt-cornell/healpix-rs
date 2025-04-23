@@ -52,9 +52,9 @@ pub const TRANSITION_Z: f64 = 2_f64 / 3_f64;
 pub const ONE_OVER_TRANSITION_Z: f64 = 1.5_f64;
 
 /// Mask to keep only the f64 sign
-pub const F64_SIGN_BIT_MASK: u64 = 0x8000000000000000;
+const F64_SIGN_BIT_MASK: u64 = 0x8000000000000000;
 /// Equals !F64_SIGN_BIT_MASK (the inverse of the f64 sign mask)
-pub const F64_BUT_SIGN_BIT_MASK: u64 = 0x7FFFFFFFFFFFFFFF;
+const F64_BUT_SIGN_BIT_MASK: u64 = 0x7FFFFFFFFFFFFFFF;
 
 #[inline(always)]
 pub const fn is_valid_depth(depth: u8) -> bool {

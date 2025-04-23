@@ -1,4 +1,7 @@
-use super::{FRAC_PI_2, FRAC_PI_4, SQRT_6, TRANSITION_LATITUDE, TRANSITION_Z};
+use super::{
+    F64_BUT_SIGN_BIT_MASK, F64_SIGN_BIT_MASK, FRAC_PI_2, FRAC_PI_4, SQRT_6, TRANSITION_LATITUDE,
+    TRANSITION_Z,
+};
 
 /// For each HEALPix depth, stores the smallest distance from an edge of a cell to the opposite
 /// edge of the same cell. If the radius of a cone is smaller than this distance, we know that
@@ -562,10 +565,6 @@ pub fn is_in_projected_equatorial_region(abs_y: f64) -> bool {
     abs_y <= 1.0
 }
 
-/// Mask to keep only the f64 sign
-const F64_SIGN_BIT_MASK: u64 = 0x8000000000000000;
-/// Equals !F64_SIGN_BIT_MASK (the inverse of the f64 sign mask)
-const F64_BUT_SIGN_BIT_MASK: u64 = 0x7FFFFFFFFFFFFFFF;
 struct AbsAndSign {
     abs: f64,
     sign: u64,

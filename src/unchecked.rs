@@ -22,8 +22,8 @@ pub const fn n_hash(depth: u8) -> u64 {
 /// i.e. the most significant bit (MSB) located just after the hash MSB.
 /// Said differently, the sentinel bit is the `(1 + 4 + 2*depth)^th` MSB
 /// The encoding, in the case of the nested scheme, is thus `0...0sbbbb112233...`, with:
-/// * `0...0`: unused bits</li>
-/// * `s` : sentinel bit</li>
+/// * `0...0`: unused bits
+/// * `s` : sentinel bit
 /// * `bbbb`: the 4 bits coding the base cell
 /// * `11`: the 2 bits coding depth 1
 /// * `22`: the 2 bits coding depth 2

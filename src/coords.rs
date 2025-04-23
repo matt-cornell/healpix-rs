@@ -1,3 +1,5 @@
+//! Longitude and latitude coordinate utilities
+
 use std::f64::consts::{FRAC_PI_2, TAU};
 
 /// A longitude-latitude pair of coordinates. Normalizes and handles conversions between `f32` and `f64`.

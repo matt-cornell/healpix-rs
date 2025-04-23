@@ -44,18 +44,18 @@ fn base_cell(i: u8, j: u8) -> u8 {
 }
 
 impl super::Layer {
-    /// Retuns the hash value of the neighbour cell of the cell of given hash, in the given direction.
-    /// If the cell do not have a neighbour in the given direction (which is the case of the
+    /// Retuns the hash value of the neighbor cell of the cell of given hash, in the given direction.
+    /// If the cell do not have a neighbor in the given direction (which is the case of the
     /// eastmost and westmost cells in polar caps base cells and northmost and southmost cells of the
     /// equatorial region base cells), the return Option is None.
     ///
     /// # Input
-    /// - `hash` the hash value of the cell we look for the neighbour
-    /// - `direction` the direction of the neighbour we look for the cell number
+    /// - `hash` the hash value of the cell we look for the neighbor
+    /// - `direction` the direction of the neighbor we look for the cell number
     ///
     /// # Output
-    /// - the cell number (hash value) of the neighbour of the given cell in the given direction
-    ///   (`None` if their is no neighbour in the given direction) .
+    /// - the cell number (hash value) of the neighbor of the given cell in the given direction
+    ///   (`None` if their is no neighbor in the given direction) .
     ///
     /// # Panics
     /// If the given `hash` value is not in `[0, 12*nside^2[`, this method panics.
@@ -68,24 +68,24 @@ impl super::Layer {
     /// let depth = 0u8;
     /// let nested0 = get(depth);
     ///
-    /// assert_eq!(5 , nested0.neighbour(4, Direction::E).unwrap());
+    /// assert_eq!(5 , nested0.neighbor(4, Direction::E).unwrap());
     /// ```
     #[inline]
-    pub fn neighbour(&self, hash: u64, direction: Direction) -> Option<u64> {
+    pub fn neighbor(&self, hash: u64, direction: Direction) -> Option<u64> {
         let h_parts: HashParts = self.decode_hash(hash);
-        self.neighbour_from_parts(h_parts.d0h, h_parts.i, h_parts.j, direction)
+        self.neighbor_from_parts(h_parts.d0h, h_parts.i, h_parts.j, direction)
     }
 
-    /// Returns the hash values of all the neighbour cells of the cell of given hash (8-connected).
+    /// Returns the hash values of all the neighbor cells of the cell of given hash (8-connected).
     /// The given cell itself can be included (setting the `include_center` parameters to `true`).
     ///
     /// # Input
-    /// - `hash` the hash value of the cell we look for the neighbours
+    /// - `hash` the hash value of the cell we look for the neighbors
     /// - `include_center` include (or not) the input cell in the Direction::C key of the returned map
     ///
     /// # Output
-    /// - the cell number (hash value) of the neighbour of the given cell in the given direction
-    ///   (`None` if their is no neighbour in the given direction) .
+    /// - the cell number (hash value) of the neighbor of the given cell in the given direction
+    ///   (`None` if their is no neighbor in the given direction) .
     ///
     /// # Panics
     /// If the given `hash` value is not in `[0, 12*nside^2[`, this method panics.
@@ -98,16 +98,16 @@ impl super::Layer {
     /// let depth = 0u8;
     /// let nested0 = get(depth);
     ///
-    /// assert_eq!(5 , *nested0.neighbours(4).get(Direction::E).unwrap());
+    /// assert_eq!(5 , *nested0.neighbors(4).get(Direction::E).unwrap());
     /// ```
-    pub fn neighbours(&self, hash: u64) -> DirectionMap<u64> {
+    pub fn neighbors(&self, hash: u64) -> DirectionMap<u64> {
         self.check_hash(hash);
         let mut result_map = DirectionMap::new();
         let HashBits { d0h, i, j } = self.pull_bits_appart(hash);
         if self.is_in_base_cell_border(i, j) {
-            self.edge_cell_neighbours(hash, &mut result_map);
+            self.edge_cell_neighbors(hash, &mut result_map);
         } else {
-            self.inner_cell_neighbours(d0h, i, j, &mut result_map);
+            self.inner_cell_neighbors(d0h, i, j, &mut result_map);
         }
         result_map
     }
@@ -119,26 +119,26 @@ impl super::Layer {
     /// If that square does not cross base cells the result will contain `(1 + 2k) × (1 + 2k)` cells,
     /// if it does there will be fewer cells.
     ///
-    /// The regular `neighbours` methods correspond to `k=1`, `k=0` returns the input cell.
+    /// The regular `neighbors` methods correspond to `k=1`, `k=0` returns the input cell.
     ///
     /// # Panics
     /// * if `k` is larger than or equals to `nside`.
     ///
     /// # Warning
     /// The algorithm we use works in the 2D projection plane.
-    /// When the corner of a base cell has 2 neighbours instead of 3, the result shape on the sphere
+    /// When the corner of a base cell has 2 neighbors instead of 3, the result shape on the sphere
     /// may be strange. Those corners are:
     /// * East and West corners of both north polar cap base cells (cells 0 to 3) and south polar cap
     ///   base cells (cells 8 to 11)
     /// * North and south corners of equatorial base cells (cell 4 to 7)
-    pub fn kth_neighbours(&self, hash: u64, k: u32) -> Vec<u64> {
+    pub fn kth_neighbors(&self, hash: u64, k: u32) -> Vec<u64> {
         match k {
             0 => [hash; 1].to_vec(),
-            1 => self.neighbours(hash).into_values().collect(),
+            1 => self.neighbors(hash).into_values().collect(),
             k if k <= self.nside => {
                 let HashParts { d0h, i, j } = self.decode_hash(hash);
                 let mut result = Vec::with_capacity(((k << 1) as usize) << 2);
-                self.kth_neighbours_internal(d0h, i, j, k, &mut result);
+                self.kth_neighbors_internal(d0h, i, j, k, &mut result);
                 result
             }
             _ => panic!(
@@ -154,18 +154,18 @@ impl super::Layer {
     /// If that square does not cross base cells the result will contain `(1 + 2k) × (1 + 2k)` cells,
     /// if it does there will be fewer cells.
     ///
-    /// The regular `neighbours` methods correspond to `k=1`, `k=0` returns the input cell.
+    /// The regular `neighbors` methods correspond to `k=1`, `k=0` returns the input cell.
     ///
     /// # Panics
     /// * if `k` is larger than or equals to `nside`.
     ///
     /// # Warning
     /// The algorithm we use works in the 2D projection plane.
-    /// When the corner of a base cell has 2 neighbours instead of 3, the result shape on the sphere
+    /// When the corner of a base cell has 2 neighbors instead of 3, the result shape on the sphere
     /// may be strange. Those corners are:
     /// * East and West corners of both north polar cap base cells (cells 0 to 3) and south polar cap base cells (cells 8 to 11)
     /// * North and south corners of equatorial base cells (cell 4 to 7)
-    pub fn kth_neighbourhood(&self, hash: u64, k: u32) -> Vec<u64> {
+    pub fn kth_neighborhood(&self, hash: u64, k: u32) -> Vec<u64> {
         match k {
             0 => vec![hash],
             k if k <= self.nside => {
@@ -178,7 +178,7 @@ impl super::Layer {
                 let mut result = Vec::with_capacity(capacity);
                 result.push(hash);
                 for r in 1..=k {
-                    self.kth_neighbours_internal(d0h, i, j, r, &mut result);
+                    self.kth_neighbors_internal(d0h, i, j, r, &mut result);
                 }
 
                 result
@@ -190,7 +190,7 @@ impl super::Layer {
         }
     }
 
-    fn kth_neighbours_internal(&self, d0h: u8, i: u32, j: u32, k: u32, result: &mut Vec<u64>) {
+    fn kth_neighbors_internal(&self, d0h: u8, i: u32, j: u32, k: u32, result: &mut Vec<u64>) {
         if i >= k && j >= k && i + k < self.nside && j + k < self.nside {
             let xfrom = i - k;
             let xto = i + k;
@@ -266,49 +266,45 @@ impl super::Layer {
             let overflow_e = overflow_se && overflow_ne;
 
             if overflow_s {
-                if let Some((d0h, i, j)) = self.to_neighbour_base_cell_coo(d0h, i, j, Direction::S)
-                {
+                if let Some((d0h, i, j)) = self.to_neighbor_base_cell_coo(d0h, i, j, Direction::S) {
                     partial_compute(nside, d0h, i, j, k, result);
                 }
             }
             if overflow_sw {
-                if let Some((d0h, i, j)) = self.to_neighbour_base_cell_coo(d0h, i, j, Direction::SW)
+                if let Some((d0h, i, j)) = self.to_neighbor_base_cell_coo(d0h, i, j, Direction::SW)
                 {
                     partial_compute(nside, d0h, i, j, k, result);
                 }
             }
             if overflow_w {
-                if let Some((d0h, i, j)) = self.to_neighbour_base_cell_coo(d0h, i, j, Direction::W)
-                {
+                if let Some((d0h, i, j)) = self.to_neighbor_base_cell_coo(d0h, i, j, Direction::W) {
                     partial_compute(nside, d0h, i, j, k, result);
                 }
             }
             if overflow_nw {
-                if let Some((d0h, i, j)) = self.to_neighbour_base_cell_coo(d0h, i, j, Direction::NW)
+                if let Some((d0h, i, j)) = self.to_neighbor_base_cell_coo(d0h, i, j, Direction::NW)
                 {
                     partial_compute(nside, d0h, i, j, k, result);
                 }
             }
             if overflow_n {
-                if let Some((d0h, i, j)) = self.to_neighbour_base_cell_coo(d0h, i, j, Direction::N)
-                {
+                if let Some((d0h, i, j)) = self.to_neighbor_base_cell_coo(d0h, i, j, Direction::N) {
                     partial_compute(nside, d0h, i, j, k, result);
                 }
             }
             if overflow_ne {
-                if let Some((d0h, i, j)) = self.to_neighbour_base_cell_coo(d0h, i, j, Direction::NE)
+                if let Some((d0h, i, j)) = self.to_neighbor_base_cell_coo(d0h, i, j, Direction::NE)
                 {
                     partial_compute(nside, d0h, i, j, k, result);
                 }
             }
             if overflow_e {
-                if let Some((d0h, i, j)) = self.to_neighbour_base_cell_coo(d0h, i, j, Direction::E)
-                {
+                if let Some((d0h, i, j)) = self.to_neighbor_base_cell_coo(d0h, i, j, Direction::E) {
                     partial_compute(nside, d0h, i, j, k, result);
                 }
             }
             if overflow_se {
-                if let Some((d0h, i, j)) = self.to_neighbour_base_cell_coo(d0h, i, j, Direction::SE)
+                if let Some((d0h, i, j)) = self.to_neighbor_base_cell_coo(d0h, i, j, Direction::SE)
                 {
                     partial_compute(nside, d0h, i, j, k, result);
                 }
@@ -317,15 +313,15 @@ impl super::Layer {
         }
     }
 
-    /// Same method as [neighbours](#method.neighbours) except that neighbours are appended
+    /// Same method as [neighbors](#method.neighbors) except that neighbors are appended
     /// to the given vector.
-    pub fn append_bulk_neighbours(&self, hash: u64, dest: &mut Vec<u64>) {
+    pub fn append_bulk_neighbors(&self, hash: u64, dest: &mut Vec<u64>) {
         self.check_hash(hash);
         let HashBits { d0h, i, j } = self.pull_bits_appart(hash);
         if self.is_in_base_cell_border(i, j) {
-            self.append_bulk_edge_cell_neighbours(hash, dest);
+            self.append_bulk_edge_cell_neighbors(hash, dest);
         } else {
-            self.append_bulk_inner_cell_neighbours(d0h, i, j, dest);
+            self.append_bulk_inner_cell_neighbors(d0h, i, j, dest);
         }
     }
 
@@ -513,11 +509,11 @@ impl super::Layer {
         if delta_depth == 0 {
             if sorted {
                 let mut tmp: Vec<u64> = Vec::with_capacity(8);
-                self.append_bulk_neighbours(hash, &mut tmp);
+                self.append_bulk_neighbors(hash, &mut tmp);
                 tmp.sort_unstable();
                 dest.append(&mut tmp);
             } else {
-                self.append_bulk_neighbours(hash, dest);
+                self.append_bulk_neighbors(hash, dest);
             }
             return;
         }
@@ -525,10 +521,10 @@ impl super::Layer {
         // let mut edge = Vec::with_capacity((4 + (self.nside << 2)) as usize); // 4 borders (nside) + 4 corners (1)
         let h_bits: HashBits = self.pull_bits_appart(hash);
         if self.is_in_base_cell_border(h_bits.i, h_bits.j) {
-            // Not easy: opposite directions depends on base cell neighbours
-            let mut neighbours = DirectionMap::new();
-            self.edge_cell_neighbours(hash, &mut neighbours);
-            let mut neighbors = neighbours.into_iter().collect::<arrayvec::ArrayVec<_, 8>>();
+            // Not easy: opposite directions depends on base cell neighbors
+            let mut neighbors = DirectionMap::new();
+            self.edge_cell_neighbors(hash, &mut neighbors);
+            let mut neighbors = neighbors.into_iter().collect::<arrayvec::ArrayVec<_, 8>>();
             if sorted {
                 neighbors.sort();
             }
@@ -537,9 +533,9 @@ impl super::Layer {
                 let dir_from_neig = if h_parts.d0h == self.h_2_d0h(hash_value) {
                     direction.opposite()
                 } else if self.depth == 0 {
-                    direction_from_neighbour(h_parts.d0h, direction)
+                    direction_from_neighbor(h_parts.d0h, direction)
                 } else {
-                    edge_cell_direction_from_neighbour(
+                    edge_cell_direction_from_neighbor(
                         h_parts.d0h,
                         self.direction_in_base_cell_border(h_bits.i, h_bits.j),
                         direction,
@@ -549,9 +545,9 @@ impl super::Layer {
             }
         } else {
             // Easy: always use the opposite direction
-            let mut neighbours = DirectionMap::new();
-            self.inner_cell_neighbours(h_bits.d0h, h_bits.i, h_bits.j, &mut neighbours);
-            let mut neighbors = neighbours.into_iter().collect::<arrayvec::ArrayVec<_, 8>>();
+            let mut neighbors = DirectionMap::new();
+            self.inner_cell_neighbors(h_bits.d0h, h_bits.i, h_bits.j, &mut neighbors);
+            let mut neighbors = neighbors.into_iter().collect::<arrayvec::ArrayVec<_, 8>>();
             if sorted {
                 neighbors.sort();
             }
@@ -598,7 +594,7 @@ impl super::Layer {
         Direction::from_index(3 * j + i)
     }
 
-    fn inner_cell_neighbours(
+    fn inner_cell_neighbors(
         &self,
         d0h_bits: u64,
         i_in_d0h_bits: u64,
@@ -631,7 +627,7 @@ impl super::Layer {
         result_map.insert(Direction::N, d0h_bits | ip1_bits | jp1_bits);
     }
 
-    fn append_bulk_inner_cell_neighbours(
+    fn append_bulk_inner_cell_neighbors(
         &self,
         d0h_bits: u64,
         i_in_d0h_bits: u64,
@@ -664,37 +660,37 @@ impl super::Layer {
         dest.push(d0h_bits | ip1_bits | jp1_bits);
     }
 
-    fn edge_cell_neighbours(&self, hash: u64, result_map: &mut DirectionMap<u64>) {
+    fn edge_cell_neighbors(&self, hash: u64, result_map: &mut DirectionMap<u64>) {
         // Could have simply been edgeCellNeighbours(hash, EnumSet.allOf(Direction.class) result)
         // but we preferred to unroll the for loop.
         let HashParts { d0h, i, j } = self.decode_hash(hash);
         for dir in Direction::VALUES {
-            if let Some(hash) = self.neighbour_from_parts(d0h, i, j, dir) {
+            if let Some(hash) = self.neighbor_from_parts(d0h, i, j, dir) {
                 result_map.insert(dir, hash);
             }
         }
     }
 
-    fn append_bulk_edge_cell_neighbours(&self, hash: u64, dest: &mut Vec<u64>) {
+    fn append_bulk_edge_cell_neighbors(&self, hash: u64, dest: &mut Vec<u64>) {
         let HashParts { d0h, i, j } = self.decode_hash(hash);
         dest.extend(
             Direction::VALUES
                 .iter()
-                .filter_map(|&dir| self.neighbour_from_parts(d0h, i, j, dir)),
+                .filter_map(|&dir| self.neighbor_from_parts(d0h, i, j, dir)),
         );
     }
 
-    fn neighbour_from_parts(&self, d0h: u8, i: u32, j: u32, dir: Direction) -> Option<u64> {
+    fn neighbor_from_parts(&self, d0h: u8, i: u32, j: u32, dir: Direction) -> Option<u64> {
         let i = (i as i32) + (dir.se() as i32);
         let j = (j as i32) + (dir.sw() as i32);
-        let d0_neighbour_dir = Direction::from_sesw(
-            self.neighbour_base_cell_offset(i),
-            self.neighbour_base_cell_offset(j),
+        let d0_neighbor_dir = Direction::from_sesw(
+            self.neighbor_base_cell_offset(i),
+            self.neighbor_base_cell_offset(j),
         )?;
-        self.neighbour_from_shifted_coos(d0h, i as u32, j as u32, d0_neighbour_dir)
+        self.neighbor_from_shifted_coos(d0h, i as u32, j as u32, d0_neighbor_dir)
     }
 
-    /*fn neighbour_base_cell_offset(&self, offset: i8, coo: u32) -> i8 {
+    /*fn neighbor_base_cell_offset(&self, offset: i8, coo: u32) -> i8 {
       if coo == 0_u32 && offset == -1_i8 {
         -1_i8
       } else if coo == self.nside_minus_1 && offset == 1_i8 {
@@ -708,7 +704,7 @@ impl super::Layer {
     /// -  0 if `coo` in `[0, nside[`
     /// -  1 if `coo` == nside
     #[inline]
-    fn neighbour_base_cell_offset(&self, coo_in_base_cell: i32) -> PosOrNeg {
+    fn neighbor_base_cell_offset(&self, coo_in_base_cell: i32) -> PosOrNeg {
         debug_assert!(-1_i32 <= coo_in_base_cell && coo_in_base_cell <= (self.nside as i32));
         let offset = (coo_in_base_cell >> 31 | coo_in_base_cell >> self.depth) as i8;
         debug_assert!(
@@ -722,30 +718,30 @@ impl super::Layer {
     }
 
     #[inline]
-    fn neighbour_from_shifted_coos(
+    fn neighbor_from_shifted_coos(
         &self,
         d0h: u8,
         i: u32,
         j: u32,
-        base_cell_neighbour_dir: Direction,
+        base_cell_neighbor_dir: Direction,
     ) -> Option<u64> {
         let d0h_mod_4 = d0h & 0b11;
         match d0h >> 2 {
-            0 => self.npc_neighbour(d0h_mod_4, i, j, base_cell_neighbour_dir),
-            1 => self.eqr_neighbour(d0h_mod_4, i, j, base_cell_neighbour_dir),
-            2 => self.spc_neighbour(d0h_mod_4, i, j, base_cell_neighbour_dir),
+            0 => self.npc_neighbor(d0h_mod_4, i, j, base_cell_neighbor_dir),
+            1 => self.eqr_neighbor(d0h_mod_4, i, j, base_cell_neighbor_dir),
+            2 => self.spc_neighbor(d0h_mod_4, i, j, base_cell_neighbor_dir),
             _ => unreachable!("Base cell must be in [0, 12["),
         }
     }
-    fn npc_neighbour(
+    fn npc_neighbor(
         &self,
         d0h_mod_4: u8,
         i: u32,
         j: u32,
-        base_cell_neighbour_dir: Direction,
+        base_cell_neighbor_dir: Direction,
     ) -> Option<u64> {
         let m = self.nside_minus_1;
-        Some(match base_cell_neighbour_dir {
+        Some(match base_cell_neighbor_dir {
             Direction::S => self.build_hash_from_parts(base_cell(iden(d0h_mod_4), 2), m, m),
             Direction::SE => self.build_hash_from_parts(base_cell(next(d0h_mod_4), 1), i, m),
             Direction::SW => self.build_hash_from_parts(base_cell(iden(d0h_mod_4), 1), m, j),
@@ -755,15 +751,15 @@ impl super::Layer {
             _ => None?,
         })
     }
-    fn eqr_neighbour(
+    fn eqr_neighbor(
         &self,
         d0h_mod_4: u8,
         i: u32,
         j: u32,
-        base_cell_neighbour_dir: Direction,
+        base_cell_neighbor_dir: Direction,
     ) -> Option<u64> {
         let m = self.nside_minus_1;
-        Some(match base_cell_neighbour_dir {
+        Some(match base_cell_neighbor_dir {
             Direction::SE => self.build_hash_from_parts(base_cell(iden(d0h_mod_4), 2), i, m),
             Direction::E => self.build_hash_from_parts(base_cell(next(d0h_mod_4), 1), 0, m),
             Direction::SW => self.build_hash_from_parts(base_cell(prev(d0h_mod_4), 2), m, j),
@@ -773,14 +769,14 @@ impl super::Layer {
             _ => None?,
         })
     }
-    fn spc_neighbour(
+    fn spc_neighbor(
         &self,
         d0h_mod_4: u8,
         i: u32,
         j: u32,
-        base_cell_neighbour_dir: Direction,
+        base_cell_neighbor_dir: Direction,
     ) -> Option<u64> {
-        Some(match base_cell_neighbour_dir {
+        Some(match base_cell_neighbor_dir {
             Direction::S => self.build_hash_from_parts(base_cell(oppo(d0h_mod_4), 2), 0, 0),
             Direction::SE => self.build_hash_from_parts(base_cell(next(d0h_mod_4), 2), 0, i),
             Direction::SW => self.build_hash_from_parts(base_cell(prev(d0h_mod_4), 2), j, 0),
@@ -795,20 +791,20 @@ impl super::Layer {
     /// * origin: South vertex of the input base cell
     /// * x-axis: South vertex to East vertex of the input base cell
     /// * y-axis: South vertex to West vertex of the input base cell
-    ///   into coordinates in the frame attached to the neighbour cell of given direction (with respect to
+    ///   into coordinates in the frame attached to the neighbor cell of given direction (with respect to
     ///   the input base cell).
     /// # Params:
     /// * `new_base_cell_dir`: direction of the base cell in which we want the new coordinates, with
     ///   respect to the given `d0h` base cell.
     /// # Retuned params:
-    /// * returns `None` if the base cell has no neighbour in the given direction.
+    /// * returns `None` if the base cell has no neighbor in the given direction.
     /// * `r.0`: base cell number of the cell in which the new coordinates are expressed.
     /// * `r.1`: coordinate along the `S to SE` axis in the new base cell.
     /// * `r.2`: coordinate along the `S to SW` axis in the new base cell.
     /// # Info:
     /// * input `i` and `j` coordinates are supposed to be in `[0, nside[` while output coordinates
     ///   may be negative and or larger that `nside`.
-    pub fn to_neighbour_base_cell_coo(
+    pub fn to_neighbor_base_cell_coo(
         &self,
         d0h: u8,
         i: i32,
@@ -817,13 +813,13 @@ impl super::Layer {
     ) -> Option<(u8, i32, i32)> {
         let d0h_mod_4 = d0h & 0b11;
         match d0h >> 2 {
-            0 => self.to_neighbour_base_cell_coo_npc(d0h_mod_4, i, j, new_base_cell_dir),
-            1 => self.to_neighbour_base_cell_coo_eqr(d0h_mod_4, i, j, new_base_cell_dir),
-            2 => self.to_neighbour_base_cell_coo_spc(d0h_mod_4, i, j, new_base_cell_dir),
+            0 => self.to_neighbor_base_cell_coo_npc(d0h_mod_4, i, j, new_base_cell_dir),
+            1 => self.to_neighbor_base_cell_coo_eqr(d0h_mod_4, i, j, new_base_cell_dir),
+            2 => self.to_neighbor_base_cell_coo_spc(d0h_mod_4, i, j, new_base_cell_dir),
             _ => unreachable!("Base cell must be in [0, 12["),
         }
     }
-    fn to_neighbour_base_cell_coo_npc(
+    fn to_neighbor_base_cell_coo_npc(
         &self,
         d0h_mod_4: u8,
         i: i32,
@@ -842,7 +838,7 @@ impl super::Layer {
             _ => None,
         }
     }
-    fn to_neighbour_base_cell_coo_eqr(
+    fn to_neighbor_base_cell_coo_eqr(
         &self,
         d0h_mod_4: u8,
         i: i32,
@@ -860,7 +856,7 @@ impl super::Layer {
             _ => None,
         }
     }
-    fn to_neighbour_base_cell_coo_spc(
+    fn to_neighbor_base_cell_coo_spc(
         &self,
         d0h_mod_4: u8,
         i: i32,
@@ -880,44 +876,44 @@ impl super::Layer {
     }
 }
 
-/// Returns the direction of a cell on the inner edge of the given base cell from its neighbour
+/// Returns the direction of a cell on the inner edge of the given base cell from its neighbor
 /// located at the given direction in a different base cell.
 /// # Inputs
 /// - `base_cell` the base cell containing the sub-cell we are looking for the direction from its
-///   neighbour in the given `neighbour_direction`
+///   neighbor in the given `neighbor_direction`
 /// - `inner_direction` the direction of the sub-cell in the edge of the given base cell
-/// - `neighbour_direction` direction of the neighbour of the sub-cell from which we are looking
+/// - `neighbor_direction` direction of the neighbor of the sub-cell from which we are looking
 ///   at the direction of the sub-cell
 ///   
-pub fn edge_cell_direction_from_neighbour(
+pub fn edge_cell_direction_from_neighbor(
     base_cell: u8,
     inner_direction: Direction,
-    neighbour_direction: Direction,
+    neighbor_direction: Direction,
 ) -> Direction {
     match base_cell >> 2 {
         // <=> basce_cell / 4
-        0 => npc_egde_direction_from_neighbour(inner_direction, neighbour_direction),
-        1 => eqr_edge_direction_from_neighbour(inner_direction, neighbour_direction),
-        2 => spc_edge_direction_from_neighbour(inner_direction, neighbour_direction),
+        0 => npc_egde_direction_from_neighbor(inner_direction, neighbor_direction),
+        1 => eqr_edge_direction_from_neighbor(inner_direction, neighbor_direction),
+        2 => spc_edge_direction_from_neighbor(inner_direction, neighbor_direction),
         _ => panic!("Base cell must be in [0, 12["),
     }
 }
 
-fn npc_egde_direction_from_neighbour(
+fn npc_egde_direction_from_neighbor(
     inner_direction: Direction,
-    neighbour_direction: Direction,
+    neighbor_direction: Direction,
 ) -> Direction {
-    match neighbour_direction {
+    match neighbor_direction {
         Direction::E => match inner_direction {
             Direction::N | Direction::NE => Direction::N,
-            Direction::E => panic!("No neighbour in direction {:?}", neighbour_direction),
-            Direction::S | Direction::SE => neighbour_direction.opposite(),
+            Direction::E => panic!("No neighbor in direction {:?}", neighbor_direction),
+            Direction::S | Direction::SE => neighbor_direction.opposite(),
             _ => unreachable!(),
         },
         Direction::W => match inner_direction {
             Direction::N | Direction::NW => Direction::N,
-            Direction::W => panic!("No neighbour in direction {:?}", neighbour_direction),
-            Direction::S | Direction::SW => neighbour_direction.opposite(),
+            Direction::W => panic!("No neighbor in direction {:?}", neighbor_direction),
+            Direction::S | Direction::SW => neighbor_direction.opposite(),
             _ => unreachable!(),
         },
         Direction::NE => {
@@ -934,32 +930,32 @@ fn npc_egde_direction_from_neighbour(
             Direction::W | Direction::NW => Direction::E,
             _ => unreachable!(),
         },
-        _ => neighbour_direction.opposite(),
+        _ => neighbor_direction.opposite(),
     }
 }
 
-fn eqr_edge_direction_from_neighbour(
+fn eqr_edge_direction_from_neighbor(
     _inner_direction: Direction,
-    neighbour_direction: Direction,
+    neighbor_direction: Direction,
 ) -> Direction {
-    neighbour_direction.opposite()
+    neighbor_direction.opposite()
 }
 
-fn spc_edge_direction_from_neighbour(
+fn spc_edge_direction_from_neighbor(
     inner_direction: Direction,
-    neighbour_direction: Direction,
+    neighbor_direction: Direction,
 ) -> Direction {
-    match neighbour_direction {
+    match neighbor_direction {
         Direction::E => match inner_direction {
             Direction::S | Direction::SE => Direction::S,
-            Direction::E => panic!("No neighbour in direction {:?}", neighbour_direction),
-            Direction::N | Direction::NE => neighbour_direction.opposite(),
+            Direction::E => panic!("No neighbor in direction {:?}", neighbor_direction),
+            Direction::N | Direction::NE => neighbor_direction.opposite(),
             _ => unreachable!(),
         },
         Direction::W => match inner_direction {
             Direction::S | Direction::SW => Direction::S,
-            Direction::W => panic!("No neighbour in direction {:?}", neighbour_direction),
-            Direction::N | Direction::NW => neighbour_direction.opposite(),
+            Direction::W => panic!("No neighbor in direction {:?}", neighbor_direction),
+            Direction::N | Direction::NW => neighbor_direction.opposite(),
             _ => unreachable!(),
         },
         Direction::SE => {
@@ -976,55 +972,55 @@ fn spc_edge_direction_from_neighbour(
             Direction::W | Direction::SW => Direction::E,
             _ => unreachable!(),
         },
-        _ => neighbour_direction.opposite(),
+        _ => neighbor_direction.opposite(),
     }
 }
 
-/// Returns the direction of the given base cell from its neighbour base cell located
+/// Returns the direction of the given base cell from its neighbor base cell located
 /// in the given direction.
 /// # Panics
-/// If the base cell has no neighbour in the given direction (i.e. N/S for equatorial cells
+/// If the base cell has no neighbor in the given direction (i.e. N/S for equatorial cells
 /// and E/W for polar caps cells)
-pub fn direction_from_neighbour(base_cell: u8, neighbour_direction: Direction) -> Direction {
+pub fn direction_from_neighbor(base_cell: u8, neighbor_direction: Direction) -> Direction {
     match base_cell >> 2 {
         // <=> basce_cell / 4
-        0 => npc_direction_from_neighbour(neighbour_direction),
-        1 => eqr_direction_from_neighbour(neighbour_direction),
-        2 => spc_direction_from_neighbour(neighbour_direction),
+        0 => npc_direction_from_neighbor(neighbor_direction),
+        1 => eqr_direction_from_neighbor(neighbor_direction),
+        2 => spc_direction_from_neighbor(neighbor_direction),
         _ => panic!("Base cell must be in [0, 12["),
     }
 }
 
-fn npc_direction_from_neighbour(neighbour_direction: Direction) -> Direction {
-    match neighbour_direction {
+fn npc_direction_from_neighbor(neighbor_direction: Direction) -> Direction {
+    match neighbor_direction {
         Direction::E | Direction::W => {
-            panic!("No neighbour in direction {:?}", neighbour_direction)
+            panic!("No neighbor in direction {:?}", neighbor_direction)
         }
         Direction::NE => Direction::NW,
         Direction::NW => Direction::NE,
         Direction::N => Direction::N,
-        _ => neighbour_direction.opposite(),
+        _ => neighbor_direction.opposite(),
     }
 }
 
-fn eqr_direction_from_neighbour(neighbour_direction: Direction) -> Direction {
-    match neighbour_direction {
+fn eqr_direction_from_neighbor(neighbor_direction: Direction) -> Direction {
+    match neighbor_direction {
         Direction::S | Direction::N => {
-            panic!("No neighbour in direction {:?}", neighbour_direction)
+            panic!("No neighbor in direction {:?}", neighbor_direction)
         }
-        _ => neighbour_direction.opposite(),
+        _ => neighbor_direction.opposite(),
     }
 }
 
-fn spc_direction_from_neighbour(neighbour_direction: Direction) -> Direction {
-    match neighbour_direction {
+fn spc_direction_from_neighbor(neighbor_direction: Direction) -> Direction {
+    match neighbor_direction {
         Direction::E | Direction::W => {
-            panic!("No neighbour in direction {:?}", neighbour_direction)
+            panic!("No neighbor in direction {:?}", neighbor_direction)
         }
         Direction::S => Direction::S,
         Direction::SE => Direction::SW,
         Direction::SW => Direction::SE,
-        _ => neighbour_direction.opposite(),
+        _ => neighbor_direction.opposite(),
     }
 }
 

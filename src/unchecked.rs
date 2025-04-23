@@ -1,3 +1,5 @@
+//! Unchecked free functions, these are called by implementations and the [`checked`](crate::checked) functions
+
 #[inline(always)]
 pub const fn nside(depth: u8) -> u32 {
     1u32 << depth

@@ -49,7 +49,7 @@ impl Mul<f64> for PosOrNeg {
     }
 }
 
-/// A cardinal direction.
+/// A cardinal direction: North, East, South, or West.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(u8)]
 pub enum Cardinal {
@@ -136,6 +136,7 @@ impl Enum for Cardinal {
     }
 }
 
+/// An ordinal direction: Northeast, Southeast, Southwest, or Northwest.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(u8)]
 pub enum Ordinal {
@@ -242,7 +243,7 @@ impl Enum for Ordinal {
     }
 }
 
-/// A direction, directed
+/// A direction, either cardinal or ordinal.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(u8)]
 pub enum Direction {

@@ -1,3 +1,4 @@
+//! Checked free functions; all of these assert a valid depth before delegating to their corresponding [`unchecked`] function.
 use super::*;
 
 #[inline(always)]

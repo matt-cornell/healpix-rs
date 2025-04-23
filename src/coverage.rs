@@ -32,7 +32,7 @@ impl super::Layer {
                 {
                     let d = best_starting_depth(mec.radius()).min(self.depth);
                     let h = hash(d, center.lon(), center.lat());
-                    (d, neighbours(d, h, true).sorted_values_vec())
+                    (d, neighbors(d, h, true).sorted_values_vec())
                 } else {
                     (0, (0..12).collect::<Vec<u64>>())
                 }
@@ -256,7 +256,7 @@ impl super::Layer {
         let depth_start = best_starting_depth(cone_radius);
         if depth_start >= self.depth {
             let neigs: Vec<u64> = self
-                .neighbours(self.hash(cone_lon, cone_lat), true)
+                .neighbors(self.hash(cone_lon, cone_lat), true)
                 .values_vec()
                 .into_iter()
                 .filter(|neigh| {
@@ -281,7 +281,7 @@ impl super::Layer {
             let minmax_array: Box<[MinMax]> = to_shs_min_max_array(cone_radius, &distances);
             let root_layer = get(depth_start);
             let root_center_hash = root_layer.hash(cone_lon, cone_lat);
-            let neigs = root_layer.neighbours(root_center_hash, true);
+            let neigs = root_layer.neighbors(root_center_hash, true);
             let mut bmoc_builder = BMOCBuilderUnsafe::new(
                 self.depth,
                 self.n_moc_cell_in_cone_upper_bound(cone_radius),
@@ -440,7 +440,7 @@ impl super::Layer {
         let depth_start = best_starting_depth(cone_radius);
         if depth_start >= self.depth {
             let neigs: Vec<u64> = self
-                .neighbours(self.hash(cone_lon, cone_lat), true)
+                .neighbors(self.hash(cone_lon, cone_lat), true)
                 .values_vec()
                 .into_iter()
                 .filter(|neigh| {
@@ -472,7 +472,7 @@ impl super::Layer {
             let minmax_array: Box<[MinMax]> = to_shs_min_max_array(cone_radius, &distances);
             let root_layer = get(depth_start);
             let root_center_hash = root_layer.hash(cone_lon, cone_lat);
-            let neigs = root_layer.neighbours(root_center_hash, true);
+            let neigs = root_layer.neighbors(root_center_hash, true);
             let mut bmoc_builder = BMOCBuilderUnsafe::new(
                 self.depth,
                 self.n_moc_cell_in_cone_upper_bound(cone_radius),
@@ -715,7 +715,7 @@ impl super::Layer {
             let root_layer = get(depth_start);
             let center_hash_at_depth_start = root_layer.hash(cone_lon, cone_lat);
             let mut neigs: Vec<u64> = root_layer
-                .neighbours(center_hash_at_depth_start, true)
+                .neighbors(center_hash_at_depth_start, true)
                 .values_vec()
                 .iter()
                 .filter(|neigh| {
@@ -764,7 +764,7 @@ impl super::Layer {
                 to_shs_min_max_array(cone_radius_ext, &distances_ext);
             let root_layer = get(depth_start);
             let root_center_hash = root_layer.hash(cone_lon, cone_lat);
-            let neigs = root_layer.neighbours(root_center_hash, true);
+            let neigs = root_layer.neighbors(root_center_hash, true);
             let mut bmoc_builder = BMOCBuilderUnsafe::new(
                 self.depth,
                 self.n_moc_cell_in_cone_upper_bound(cone_radius_ext),
@@ -1029,7 +1029,7 @@ impl super::Layer {
             let root_layer = get(depth_start);
             let center_hash_at_depth_start = root_layer.hash(cone_lon, cone_lat);
             let mut neigs: Vec<u64> = root_layer
-                .neighbours(center_hash_at_depth_start, true)
+                .neighbors(center_hash_at_depth_start, true)
                 .values_vec()
                 .iter()
                 .map(h_to_h_and_shs(cone_lon, cone_lat, cos_cone_lat, root_layer))
@@ -1055,7 +1055,7 @@ impl super::Layer {
             let minmax_array: Box<[MinMax]> = to_shs_min_max_array(cone_radius, &distances);
             let root_layer = get(depth_start);
             let root_center_hash = root_layer.hash(cone_lon, cone_lat);
-            let neigs = root_layer.neighbours(root_center_hash, true);
+            let neigs = root_layer.neighbors(root_center_hash, true);
             let mut bmoc_builder = BMOCBuilderUnsafe::new(
                 self.depth,
                 self.n_moc_cell_in_cone_upper_bound(cone_radius),
@@ -1323,7 +1323,7 @@ impl super::Layer {
         if depth_start >= self.depth {
             let distance = largest_center_to_vertex_distance_with_radius(depth_start, lon, lat, a);
             let mut neigs: Vec<u64> = root_layer
-                .neighbours(root_center_hash, true)
+                .neighbors(root_center_hash, true)
                 .values_vec()
                 .into_iter()
                 .filter(|h| {
@@ -1347,7 +1347,7 @@ impl super::Layer {
                 lat,
                 a,
             );
-            let neigs = root_layer.neighbours(root_center_hash, true);
+            let neigs = root_layer.neighbors(root_center_hash, true);
             let mut bmoc_builder =
                 BMOCBuilderUnsafe::new(self.depth, self.n_moc_cell_in_cone_upper_bound(a));
             for &root_hash in neigs.sorted_values().iter() {
@@ -1603,7 +1603,7 @@ impl super::Layer {
                 let root_layer = get(depth_start);
                 let LonLat { lon, lat } = bounding_cone.center().lonlat();
                 let center_hash = root_layer.hash(lon, lat);
-                let mut neigs: Vec<u64> = root_layer.neighbours(center_hash, true).values_vec();
+                let mut neigs: Vec<u64> = root_layer.neighbors(center_hash, true).values_vec();
                 neigs.sort_unstable();
                 neigs
             }

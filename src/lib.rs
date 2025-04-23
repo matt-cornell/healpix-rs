@@ -679,7 +679,7 @@ impl Layer {
     ////////////////////////////
 
     /// See [wikipeida](https://en.wikipedia.org/wiki/Bilinear_interpolation) about bilinear interpolation.
-    /// The main difficulty here are the corners of base cells for which the number of neighbours is not
+    /// The main difficulty here are the corners of base cells for which the number of neighbors is not
     /// equals to 8.
     /// In the normal case we have:
     /// ```math
@@ -688,7 +688,7 @@ impl Layer {
     ///         + f(0, 1) (1 - x) y
     ///         + f(1, 1) x y
     /// ```
-    /// If a neighbour is missing, we share equally its contribution between the 2 cells that do not
+    /// If a neighbor is missing, we share equally its contribution between the 2 cells that do not
     /// contains the given coordinate, and we fill the array with the cell of the given coordinate
     /// with a weight of 0.  
     /// # Output
@@ -698,8 +698,8 @@ impl Layer {
     ///   If `lat` **not in** `[-pi/2, pi/2]`, this method panics.
     pub fn bilinear_interpolation(&self, lon: f64, lat: f64) -> [(u64, f64); 4] {
         let (h, dx, dy) = self.hash_with_dxdy(lon, lat);
-        // We can probably optimize here since we are interested in only 3 neighbours
-        let neigbours_map = self.neighbours(h);
+        // We can probably optimize here since we are interested in only 3 neighbors
+        let neigbours_map = self.neighbors(h);
         // Look at the four pixels
         let xcoo = (dx > 0.5) as u8;
         let ycoo = (dy > 0.5) as u8;

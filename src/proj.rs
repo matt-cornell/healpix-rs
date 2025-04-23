@@ -563,9 +563,9 @@ pub fn is_in_projected_equatorial_region(abs_y: f64) -> bool {
 }
 
 /// Mask to keep only the f64 sign
-pub const F64_SIGN_BIT_MASK: u64 = 0x8000000000000000;
+const F64_SIGN_BIT_MASK: u64 = 0x8000000000000000;
 /// Equals !F64_SIGN_BIT_MASK (the inverse of the f64 sign mask)
-pub const F64_BUT_SIGN_BIT_MASK: u64 = 0x7FFFFFFFFFFFFFFF;
+const F64_BUT_SIGN_BIT_MASK: u64 = 0x7FFFFFFFFFFFFFFF;
 struct AbsAndSign {
     abs: f64,
     sign: u64,

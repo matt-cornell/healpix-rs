@@ -1,4 +1,5 @@
-//! *Taken from CDSHealpix's `nested::zordercurve`.*
+//! *Directly Taken from CDSHealpix's `nested::zordercurve`.*
+//!
 //! 2D Morton code implementation.
 //! For BMI 2.0 references, see:
 //! - [here](https://github.com/gnzlbg/bitwise/blob/master/src/word/morton.rs) to use BMI 2.0 pdep/pext instructions.

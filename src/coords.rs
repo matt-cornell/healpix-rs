@@ -91,3 +91,49 @@ impl From<LonLat> for [f64; 2] {
         value.as_f64s()
     }
 }
+
+/// A type that acts like a longitude-latitude pair
+pub trait LonLatT {
+    fn lon(&self) -> f64;
+    fn lat(&self) -> f64;
+}
+impl LonLatT for LonLat {
+    fn lon(&self) -> f64 {
+        self.lon
+    }
+    fn lat(&self) -> f64 {
+        self.lat
+    }
+}
+impl LonLatT for (f64, f64) {
+    fn lon(&self) -> f64 {
+        self.0
+    }
+    fn lat(&self) -> f64 {
+        self.1
+    }
+}
+impl LonLatT for [f64; 2] {
+    fn lon(&self) -> f64 {
+        self[0]
+    }
+    fn lat(&self) -> f64 {
+        self[1]
+    }
+}
+impl LonLatT for (f32, f32) {
+    fn lon(&self) -> f64 {
+        self.0 as _
+    }
+    fn lat(&self) -> f64 {
+        self.1 as _
+    }
+}
+impl LonLatT for [f32; 2] {
+    fn lon(&self) -> f64 {
+        self[0] as _
+    }
+    fn lat(&self) -> f64 {
+        self[1] as _
+    }
+}

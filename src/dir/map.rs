@@ -38,11 +38,20 @@ impl<K: Enum, V, const N: usize> EnumMap<K, V, N> {
     pub fn remove(&mut self, key: K) -> Option<V> {
         self.values[key.into_enum_index()].take()
     }
-    pub fn get(&mut self, key: K) -> Option<&V> {
+    pub fn get(&self, key: K) -> Option<&V> {
         self.values[key.into_enum_index()].as_ref()
     }
     pub fn get_mut(&mut self, key: K) -> Option<&mut V> {
         self.values[key.into_enum_index()].as_mut()
+    }
+    pub fn values(&self) -> impl Iterator<Item = &V> {
+        self.values.iter().flatten()
+    }
+    pub fn values_mut(&mut self) -> impl Iterator<Item = &mut V> {
+        self.values.iter_mut().flatten()
+    }
+    pub fn into_values(self) -> impl Iterator<Item = V> {
+        self.values.into_iter().flatten()
     }
 }
 impl<K, V, const N: usize> Default for EnumMap<K, V, N> {

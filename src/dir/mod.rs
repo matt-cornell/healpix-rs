@@ -3,6 +3,8 @@
 pub mod map;
 pub mod set;
 
+use std::ops::Mul;
+
 /// A positive or negative value
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(i8)]
@@ -10,6 +12,41 @@ pub enum PosOrNeg {
     Neg = -1,
     Zero = 0,
     Pos = 1,
+}
+impl PosOrNeg {
+    pub const fn from_val(val: i8) -> Self {
+        if val < 0 {
+            Self::Neg
+        } else if val > 0 {
+            Self::Pos
+        } else {
+            Self::Zero
+        }
+    }
+}
+impl Mul for PosOrNeg {
+    type Output = Self;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        if self == PosOrNeg::Zero || rhs == PosOrNeg::Zero {
+            PosOrNeg::Zero
+        } else if self == rhs {
+            PosOrNeg::Pos
+        } else {
+            PosOrNeg::Neg
+        }
+    }
+}
+impl Mul<f64> for PosOrNeg {
+    type Output = f64;
+
+    fn mul(self, rhs: f64) -> Self::Output {
+        match self {
+            PosOrNeg::Pos => rhs,
+            PosOrNeg::Neg => -rhs,
+            PosOrNeg::Zero => 0.0,
+        }
+    }
 }
 
 /// A cardinal direction.
@@ -88,6 +125,14 @@ impl Cardinal {
             [PosOrNeg::Neg, PosOrNeg::Zero] => Some(Self::W),
             _ => None,
         }
+    }
+}
+impl Enum for Cardinal {
+    fn from_enum_index(idx: usize) -> Self {
+        Self::from_index(idx as _)
+    }
+    fn into_enum_index(self) -> usize {
+        self.index() as _
     }
 }
 
@@ -188,6 +233,14 @@ impl Ordinal {
         self.index().wrapping_sub(other.index()) % 4
     }
 }
+impl Enum for Ordinal {
+    fn from_enum_index(idx: usize) -> Self {
+        Self::from_index(idx as _)
+    }
+    fn into_enum_index(self) -> usize {
+        self.index() as _
+    }
+}
 
 /// A direction, directed
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -277,7 +330,25 @@ impl Direction {
             Self::NW => [PosOrNeg::Neg, PosOrNeg::Pos],
         }
     }
-    /// Try to create find a cardinal direction from X- and Y- directions.
+    /// Get the offset to the southeast.
+    #[inline(always)]
+    pub const fn se(self) -> PosOrNeg {
+        match self {
+            Self::NW | Self::N | Self::W => PosOrNeg::Neg,
+            Self::SE | Self::S | Self::E => PosOrNeg::Pos,
+            Self::NE | Self::SW => PosOrNeg::Zero,
+        }
+    }
+    /// Get the offset to the southwest.
+    #[inline(always)]
+    pub const fn sw(self) -> PosOrNeg {
+        match self {
+            Self::NE | Self::N | Self::E => PosOrNeg::Neg,
+            Self::SW | Self::S | Self::W => PosOrNeg::Pos,
+            Self::NW | Self::SE => PosOrNeg::Zero,
+        }
+    }
+    /// Try to create find a direction from X- and Y- directions.
     #[inline(always)]
     pub const fn from_xy(x: PosOrNeg, y: PosOrNeg) -> Option<Self> {
         match [x, y] {
@@ -292,8 +363,53 @@ impl Direction {
             _ => None,
         }
     }
+    /// Try to find a direction from SE- and SW- offsets.
+    #[inline(always)]
+    pub const fn from_sesw(se: PosOrNeg, sw: PosOrNeg) -> Option<Self> {
+        match [se, sw] {
+            [PosOrNeg::Zero, PosOrNeg::Pos] => Some(Self::SW),
+            [PosOrNeg::Pos, PosOrNeg::Pos] => Some(Self::S),
+            [PosOrNeg::Pos, PosOrNeg::Zero] => Some(Self::SE),
+            [PosOrNeg::Pos, PosOrNeg::Neg] => Some(Self::E),
+            [PosOrNeg::Zero, PosOrNeg::Neg] => Some(Self::NE),
+            [PosOrNeg::Neg, PosOrNeg::Neg] => Some(Self::N),
+            [PosOrNeg::Neg, PosOrNeg::Zero] => Some(Self::NW),
+            [PosOrNeg::Neg, PosOrNeg::Pos] => Some(Self::W),
+            _ => None,
+        }
+    }
+    #[inline(always)]
+    pub const fn opposite(self) -> Self {
+        Self::from_index((self.index() + 4) % 8)
+    }
+    #[inline(always)]
+    pub const fn is_cardinal(self) -> bool {
+        self.index() & 1 == 0
+    }
+    #[inline(always)]
+    pub const fn is_ordinal(self) -> bool {
+        self.index() & 1 == 1
+    }
+    #[inline(always)]
+    pub const fn unwrap_cardinal(self) -> Cardinal {
+        debug_assert!(self.is_cardinal());
+        Cardinal::from_index(self.index() >> 1)
+    }
+    #[inline(always)]
+    pub const fn unwrap_ordinal(self) -> Ordinal {
+        debug_assert!(self.is_ordinal());
+        Ordinal::from_index(self.index() >> 1)
+    }
 }
 
+impl Enum for Direction {
+    fn from_enum_index(idx: usize) -> Self {
+        Self::from_index(idx as _)
+    }
+    fn into_enum_index(self) -> usize {
+        self.index() as _
+    }
+}
 impl From<Cardinal> for Direction {
     fn from(value: Cardinal) -> Self {
         match value {

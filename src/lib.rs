@@ -1,3 +1,4 @@
+pub mod bmoc;
 pub mod checked;
 pub mod coords;
 pub mod dir;

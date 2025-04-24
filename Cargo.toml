@@ -6,4 +6,4 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 arrayvec = "0.7.6"
-triomphe = "0.1.14"
+triomphe = { version = "0.1.14", default-features = false }

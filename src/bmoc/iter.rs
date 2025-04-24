@@ -1,9 +1,11 @@
 use super::Cell;
 use std::iter::Copied;
+use std::ops::Range;
 use triomphe::Arc;
 
 pub type SliceIter<'a> = Copied<std::slice::Iter<'a, u64>>;
 pub type VecIter = std::vec::IntoIter<u64>;
+/// An iterator over an `Arc<[u64]>`.
 #[derive(Debug, Clone)]
 pub struct ArcIter {
     inner: Arc<[u64]>,
@@ -43,49 +45,59 @@ impl ExactSizeIterator for ArcIter {
     }
 }
 
+/// An iterator adaptor that decodes cells from a raw values.
 #[derive(Debug, Clone)]
 pub struct CellIter<I> {
-    pub(super) inner: I,
-    pub(super) max_depth: u8,
+    raw_val_iter: I,
+    max_depth: u8,
+}
+impl<I> CellIter<I> {
+    pub(super) const fn new(max_depth: u8, raw_val_iter: I) -> Self {
+        Self {
+            max_depth,
+            raw_val_iter,
+        }
+    }
 }
 impl<I: Iterator<Item = u64>> Iterator for CellIter<I> {
     type Item = Cell;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.inner
+        self.raw_val_iter
             .next()
             .map(|raw| Cell::decode(raw, self.max_depth))
     }
     fn nth(&mut self, n: usize) -> Option<Self::Item> {
-        self.inner
+        self.raw_val_iter
             .nth(n)
             .map(|raw| Cell::decode(raw, self.max_depth))
     }
     fn size_hint(&self) -> (usize, Option<usize>) {
-        self.inner.size_hint()
+        self.raw_val_iter.size_hint()
     }
 }
 impl<I: ExactSizeIterator<Item = u64>> ExactSizeIterator for CellIter<I> {
     fn len(&self) -> usize {
-        self.inner.len()
+        self.raw_val_iter.len()
     }
 }
 impl<I: DoubleEndedIterator<Item = u64>> DoubleEndedIterator for CellIter<I> {
     fn next_back(&mut self) -> Option<Self::Item> {
-        self.inner
+        self.raw_val_iter
             .next_back()
             .map(|raw| Cell::decode(raw, self.max_depth))
     }
     fn nth_back(&mut self, n: usize) -> Option<Self::Item> {
-        self.inner
+        self.raw_val_iter
             .nth_back(n)
             .map(|raw| Cell::decode(raw, self.max_depth))
     }
 }
 
+/// An iterator adaptor that wraps a stream of raw values iterates over max-level hashes.
 #[derive(Debug, Clone)]
 pub struct FlatIter<I> {
-    depth_max: u8,
+    max_depth: u8,
     deep_size: usize,
     raw_val_iter: I,
     curr_val: Option<u64>,
@@ -94,9 +106,9 @@ pub struct FlatIter<I> {
 }
 
 impl<I: Iterator<Item = u64>> FlatIter<I> {
-    pub(super) fn new(depth_max: u8, deep_size: usize, raw_val_iter: I) -> Self {
+    pub(super) fn new(max_depth: u8, deep_size: usize, raw_val_iter: I) -> Self {
         let mut flat_iter = Self {
-            depth_max,
+            max_depth,
             deep_size,
             raw_val_iter,
             curr_val: None,
@@ -112,7 +124,7 @@ impl<I: Iterator<Item = u64>> FlatIter<I> {
     }
 
     pub fn depth(&self) -> u8 {
-        self.depth_max
+        self.max_depth
     }
 
     fn next_cell(&mut self) -> Option<u64> {
@@ -166,9 +178,10 @@ impl<I: Iterator<Item = u64>> ExactSizeIterator for FlatIter<I> {
     }
 }
 
+/// An iterator adaptor that wraps a stream of raw values iterates over max-level cells.
 #[derive(Debug, Clone)]
 pub struct FlatCellIter<I> {
-    depth_max: u8,
+    max_depth: u8,
     deep_size: usize,
     raw_val_iter: I,
     curr_val: Option<Cell>,
@@ -177,9 +190,9 @@ pub struct FlatCellIter<I> {
 }
 
 impl<I: Iterator<Item = u64>> FlatCellIter<I> {
-    pub(super) fn new(depth_max: u8, deep_size: usize, raw_val_iter: I) -> Self {
+    pub(super) fn new(max_depth: u8, deep_size: usize, raw_val_iter: I) -> Self {
         let mut flat_iter = Self {
-            depth_max,
+            max_depth,
             deep_size,
             raw_val_iter,
             curr_val: None,
@@ -195,7 +208,7 @@ impl<I: Iterator<Item = u64>> FlatCellIter<I> {
     }
 
     pub fn depth(&self) -> u8 {
-        self.depth_max
+        self.max_depth
     }
 
     fn next_cell(&mut self) -> Option<Cell> {
@@ -211,7 +224,7 @@ impl<I: Iterator<Item = u64>> FlatCellIter<I> {
                 self.curr_val_max = val | ((1_u64 << twice_delta_depth) - 1_u64);
                 self.curr_val.replace(Cell {
                     raw_value,
-                    depth: self.depth_max,
+                    depth: self.max_depth,
                     hash: val,
                     is_full: (raw_value & 1_u64) == 1_u64,
                 })
@@ -229,7 +242,7 @@ impl<I: Iterator<Item = u64>> Iterator for FlatCellIter<I> {
             if cell.hash < self.curr_val_max {
                 let new_cell = Cell {
                     raw_value: cell.raw_value,
-                    depth: self.depth_max,
+                    depth: self.max_depth,
                     hash: cell.hash + 1,
                     is_full: cell.is_full,
                 };
@@ -250,5 +263,125 @@ impl<I: Iterator<Item = u64>> Iterator for FlatCellIter<I> {
 impl<I: Iterator<Item = u64>> ExactSizeIterator for FlatCellIter<I> {
     fn len(&self) -> usize {
         self.deep_size - self.n_returned
+    }
+}
+
+/// An iterator over the ranges of cells in a BMOC.
+#[derive(Debug, Clone)]
+pub struct RangeIter<I> {
+    max_depth: u8,
+    raw_val_iter: I,
+    prev_min: u64,
+    prev_max: u64,
+}
+impl<I> RangeIter<I> {
+    pub const fn new(max_depth: u8, raw_val_iter: I) -> Self {
+        Self {
+            max_depth,
+            raw_val_iter,
+            prev_min: 0,
+            prev_max: 0,
+        }
+    }
+}
+impl<I: Iterator<Item = u64>> Iterator for RangeIter<I> {
+    type Item = Range<u64>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.raw_val_iter
+            .find_map(|raw| {
+                let cell = Cell::decode(raw, self.max_depth);
+                let mut res = None;
+                if cell.depth < self.max_depth {
+                    let range = crate::to_range(cell.hash, self.max_depth - cell.depth);
+                    if range.start != self.prev_max {
+                        if self.prev_min != self.prev_max {
+                            res = Some(self.prev_min..self.prev_max);
+                        }
+                        self.prev_min = self.prev_max;
+                    }
+                    self.prev_max = range.end;
+                } else if cell.hash == self.prev_max {
+                    self.prev_max += 1;
+                } else {
+                    if self.prev_min != self.prev_max {
+                        res = Some(self.prev_min..self.prev_max);
+                    }
+                    self.prev_min = cell.hash;
+                    self.prev_max = cell.hash + 1;
+                }
+                res
+            })
+            .or_else(|| {
+                let res = (self.prev_min != self.prev_max).then_some(self.prev_min..self.prev_max);
+                self.prev_min = self.prev_max;
+                res
+            })
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (1, self.raw_val_iter.size_hint().1.map(|h| h + 1))
+    }
+}
+
+/// An iterator over the ranges of cells in a BMOC, along with their flag.
+#[derive(Debug, Clone)]
+pub struct FlaggedRangeIter<I> {
+    max_depth: u8,
+    raw_val_iter: I,
+    prev_min: u64,
+    prev_max: u64,
+    prev_flag: Option<bool>,
+}
+impl<I> FlaggedRangeIter<I> {
+    pub const fn new(max_depth: u8, raw_val_iter: I) -> Self {
+        Self {
+            max_depth,
+            raw_val_iter,
+            prev_min: 0,
+            prev_max: 0,
+            prev_flag: None,
+        }
+    }
+}
+impl<I: Iterator<Item = u64>> Iterator for FlaggedRangeIter<I> {
+    type Item = (bool, Range<u64>);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.raw_val_iter
+            .find_map(|raw| {
+                let cell = Cell::decode(raw, self.max_depth);
+                let prev_flag = self.prev_flag.get_or_insert(cell.is_full);
+                let mut res = None;
+                if cell.depth < self.max_depth {
+                    let range = crate::to_range(cell.hash, self.max_depth - cell.depth);
+                    if range.start == self.prev_max
+                        || !(self.prev_max == 0 || cell.is_full == *prev_flag)
+                    {
+                        if self.prev_min != self.prev_max {
+                            res = Some((*prev_flag, self.prev_min..self.prev_max));
+                        }
+                        self.prev_min = range.start;
+                        *prev_flag = cell.is_full;
+                    }
+                    self.prev_max = range.end;
+                } else if cell.hash == self.prev_max && *prev_flag {
+                    self.prev_max += 1;
+                } else {
+                    if self.prev_min != self.prev_max {
+                        res = Some((*prev_flag, self.prev_min..self.prev_max));
+                    }
+                    self.prev_min = cell.hash;
+                    self.prev_max = cell.hash + 1;
+                    *prev_flag = cell.is_full;
+                }
+                res
+            })
+            .or_else(|| {
+                let res = (self.prev_min != self.prev_max)
+                    .then_some((self.prev_flag.unwrap(), self.prev_min..self.prev_max));
+                self.prev_min = self.prev_max;
+                res
+            })
     }
 }

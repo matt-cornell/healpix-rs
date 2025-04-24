@@ -216,10 +216,7 @@ impl MutableBmoc<true> {
     }
     #[inline(always)]
     pub fn into_cells(self) -> iter::CellIter<iter::VecIter> {
-        iter::CellIter {
-            inner: self.entries.into_iter(),
-            max_depth: self.max_depth,
-        }
+        iter::CellIter::new(self.max_depth, self.entries.into_iter())
     }
     #[inline(always)]
     pub fn into_flat_cells(self) -> iter::FlatCellIter<iter::VecIter> {
@@ -228,6 +225,14 @@ impl MutableBmoc<true> {
     #[inline(always)]
     pub fn into_flat_iter(self) -> iter::FlatIter<iter::VecIter> {
         iter::FlatIter::new(self.max_depth, self.deep_size(), self.entries.into_iter())
+    }
+    #[inline(always)]
+    pub fn into_ranges(self) -> iter::RangeIter<iter::VecIter> {
+        iter::RangeIter::new(self.max_depth, self.entries.into_iter())
+    }
+    #[inline(always)]
+    pub fn into_flagged_ranges(self) -> iter::FlaggedRangeIter<iter::VecIter> {
+        iter::FlaggedRangeIter::new(self.max_depth, self.entries.into_iter())
     }
 }
 impl MutableBmoc<false> {
@@ -283,10 +288,7 @@ impl SharedBmoc {
     }
     #[inline(always)]
     pub fn into_cells(self) -> iter::CellIter<iter::ArcIter> {
-        iter::CellIter {
-            inner: iter::ArcIter::new(self.entries),
-            max_depth: self.max_depth,
-        }
+        iter::CellIter::new(self.max_depth, iter::ArcIter::new(self.entries))
     }
     #[inline(always)]
     pub fn into_flat_cells(self) -> iter::FlatCellIter<iter::ArcIter> {
@@ -303,6 +305,14 @@ impl SharedBmoc {
             self.deep_size(),
             iter::ArcIter::new(self.entries),
         )
+    }
+    #[inline(always)]
+    pub fn into_ranges(self) -> iter::RangeIter<iter::ArcIter> {
+        iter::RangeIter::new(self.max_depth, iter::ArcIter::new(self.entries))
+    }
+    #[inline(always)]
+    pub fn into_flagged_ranges(self) -> iter::FlaggedRangeIter<iter::ArcIter> {
+        iter::FlaggedRangeIter::new(self.max_depth, iter::ArcIter::new(self.entries))
     }
 }
 impl Bmoc for SharedBmoc {
@@ -345,6 +355,34 @@ impl<'a> BorrowedBmoc<'a> {
             entries: from.entries(),
         }
     }
+    #[inline(always)]
+    pub fn into_cells(&self) -> iter::CellIter<iter::SliceIter<'a>> {
+        iter::CellIter::new(self.max_depth, self.entries.iter().copied())
+    }
+    #[inline(always)]
+    pub fn into_flat_cells(&self) -> iter::FlatCellIter<iter::SliceIter<'a>> {
+        iter::FlatCellIter::new(
+            self.max_depth,
+            self.deep_size(),
+            self.entries.iter().copied(),
+        )
+    }
+    #[inline(always)]
+    pub fn into_flat_iter(&self) -> iter::FlatIter<iter::SliceIter<'a>> {
+        iter::FlatIter::new(
+            self.max_depth,
+            self.deep_size(),
+            self.entries.iter().copied(),
+        )
+    }
+    #[inline(always)]
+    pub fn into_ranges(&self) -> iter::RangeIter<iter::SliceIter<'a>> {
+        iter::RangeIter::new(self.max_depth, self.entries.iter().copied())
+    }
+    #[inline(always)]
+    pub fn into_flagged_ranges(&self) -> iter::FlaggedRangeIter<iter::SliceIter<'a>> {
+        iter::FlaggedRangeIter::new(self.max_depth, self.entries.iter().copied())
+    }
 }
 
 /// Whether or not a point is inside the MOC
@@ -365,10 +403,7 @@ pub trait Bmoc {
     }
     #[inline(always)]
     fn cells(&self) -> iter::CellIter<iter::SliceIter<'_>> {
-        iter::CellIter {
-            inner: self.entries().iter().copied(),
-            max_depth: self.max_depth(),
-        }
+        iter::CellIter::new(self.max_depth(), self.entries().iter().copied())
     }
     #[inline(always)]
     fn flat_cells(&self) -> iter::FlatCellIter<iter::SliceIter<'_>> {
@@ -386,6 +421,14 @@ pub trait Bmoc {
             self.entries().iter().copied(),
         )
     }
+    #[inline(always)]
+    fn ranges(&self) -> iter::RangeIter<iter::SliceIter<'_>> {
+        iter::RangeIter::new(self.max_depth(), self.entries().iter().copied())
+    }
+    #[inline(always)]
+    fn flagged_ranges(&self) -> iter::FlaggedRangeIter<iter::SliceIter<'_>> {
+        iter::FlaggedRangeIter::new(self.max_depth(), self.entries().iter().copied())
+    }
     /// Get the number of entries in this BMOC.
     #[inline(always)]
     fn size(&self) -> usize {
@@ -394,7 +437,13 @@ pub trait Bmoc {
     /// Get the number of max-depth cells in this BMOC.
     #[inline(always)]
     fn deep_size(&self) -> usize {
-        todo!()
+        let max_depth = self.max_depth();
+        self.entries()
+            .iter()
+            .map(|&raw| {
+                crate::unchecked::nside_square(max_depth - get_depth(raw, max_depth)) as usize
+            })
+            .sum()
     }
     /// Compare this BMOC against another one generically.
     #[inline(always)]

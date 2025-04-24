@@ -3,6 +3,9 @@ use triomphe::Arc;
 pub mod iter;
 mod ops;
 
+#[cfg(test)]
+mod tests;
+
 /// A [BMOC](Bmoc) that has mutable access to its entries and therefore, is able to do in-place operations.
 ///
 /// This type has a marker boolean to check if it's valid. While this isn't used for safety, it's used to enforce validity.

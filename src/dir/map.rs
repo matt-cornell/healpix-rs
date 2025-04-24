@@ -118,3 +118,28 @@ pub type EnumMap8<K, V> = EnumMap<K, V, 8>;
 pub type CardinalMap<V> = EnumMap4<Cardinal, V>;
 pub type OrdinalMap<V> = EnumMap4<Ordinal, V>;
 pub type DirectionMap<V> = EnumMap8<Direction, V>;
+
+impl<T, K: Enum, V: PartialEq<T>, const N: usize> PartialEq<[T]> for EnumMap<K, V, N> {
+    fn eq(&self, other: &[T]) -> bool {
+        self.values().eq(other)
+    }
+}
+impl<T, K: Enum, V: PartialOrd<T>, const N: usize> PartialOrd<[T]> for EnumMap<K, V, N> {
+    fn partial_cmp(&self, other: &[T]) -> Option<std::cmp::Ordering> {
+        self.values().partial_cmp(other)
+    }
+}
+impl<T, K: Enum, V: PartialEq<T>, const N1: usize, const N2: usize> PartialEq<[T; N2]>
+    for EnumMap<K, V, N1>
+{
+    fn eq(&self, other: &[T; N2]) -> bool {
+        self.values().eq(other)
+    }
+}
+impl<T, K: Enum, V: PartialOrd<T>, const N1: usize, const N2: usize> PartialOrd<[T; N2]>
+    for EnumMap<K, V, N1>
+{
+    fn partial_cmp(&self, other: &[T; N2]) -> Option<std::cmp::Ordering> {
+        self.values().partial_cmp(other)
+    }
+}

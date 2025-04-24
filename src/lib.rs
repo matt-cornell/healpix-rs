@@ -12,6 +12,9 @@ pub mod sph_geom;
 pub mod unchecked;
 pub mod zoc;
 
+#[cfg(test)]
+mod tests;
+
 use std::f64::consts::{FRAC_PI_2, FRAC_PI_4};
 const SQRT_6: f64 = 2.449489743;
 
@@ -845,4 +848,22 @@ struct HashBits {
     d0h: u64, // base cell number (depth 0 hash value) bits
     i: u64,   // in the base cell, z-order curve coordinate along the x-axis bits
     j: u64,   // in the base cell, z-order curve coordinate along the y-axis bits
+}
+
+/// Returns the depth and the hash number from the uniq representation.
+/// Inverse operation of [to_uniq](fn.to_uniq.html).
+pub fn from_uniq(uniq_hash: u64) -> (u8, u64) {
+    let depth = (60 - uniq_hash.leading_zeros()) >> 1;
+    let hash = uniq_hash & !(16_u64 << (depth << 1));
+    // = uniq_hash - (16_u64 << (depth << 1));
+    // = uniq_hash & !highest_one_bit(uniq_hash)); also works, but do not benefit from depth
+    (depth as u8, hash)
+}
+
+/// Returns the depth and the hash number from the uniq representation.
+/// Inverse operation of [to_uniq](fn.to_uniq_ivoa.html).
+pub fn from_uniq_ivoa(uniq_hash: u64) -> (u8, u64) {
+    let depth = (61 - uniq_hash.leading_zeros()) >> 1;
+    let hash = uniq_hash - (4_u64 << (depth << 1));
+    (depth as u8, hash)
 }

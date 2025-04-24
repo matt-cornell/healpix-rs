@@ -6,4 +6,5 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 arrayvec = "0.7.6"
+either = "1.15.0"
 triomphe = { version = "0.1.14", default-features = false }

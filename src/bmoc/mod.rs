@@ -40,6 +40,12 @@ impl<const VALID: bool> MutableBmoc<VALID> {
             entries: Vec::with_capacity(capacity),
         }
     }
+    pub const fn max_depth(&self) -> u8 {
+        self.max_depth
+    }
+    pub fn entries(&self) -> &[u64] {
+        &self.entries
+    }
     /// Postfix form of [`std::mem::take`]
     pub fn take(&mut self) -> Self {
         std::mem::take(self)
@@ -142,6 +148,10 @@ impl<const VALID: bool> MutableBmoc<VALID> {
                 curr_to_index = i_curr_moc;
             }
         }
+    }
+    pub fn into_packed(mut self) -> MutableBmoc<true> {
+        self.pack();
+        self.into_valid_unchecked()
     }
 }
 impl MutableBmoc<true> {
@@ -477,7 +487,7 @@ pub trait Bmoc {
         ops::not(self.max_depth(), self.entries())
     }
 
-    /// See [`and`].
+    /// See [`and`](Bmoc::and).
     #[inline(always)]
     fn and_dyn(&self, rhs: BorrowedBmoc) -> MutableBmoc {
         ops::and(self.as_borrowed(), rhs)
@@ -497,7 +507,7 @@ pub trait Bmoc {
         ops::and(self.as_borrowed(), rhs.as_borrowed())
     }
 
-    /// See [`or`].
+    /// See [`or`](Bmoc::or).
     #[inline(always)]
     fn or_dyn(&self, rhs: BorrowedBmoc) -> MutableBmoc {
         ops::or(self.as_borrowed(), rhs)
@@ -516,7 +526,7 @@ pub trait Bmoc {
         ops::or(self.as_borrowed(), rhs.as_borrowed())
     }
 
-    /// See [`xor`].
+    /// See [`xor`](Bmoc::xor).
     #[inline(always)]
     fn xor_dyn(&self, rhs: BorrowedBmoc) -> MutableBmoc {
         ops::xor(self.as_borrowed(), rhs)
@@ -536,7 +546,7 @@ pub trait Bmoc {
         ops::xor(self.as_borrowed(), rhs.as_borrowed())
     }
 
-    /// See [`minus`].
+    /// See [`minus`](Bmoc::minus).
     #[inline(always)]
     fn minus_dyn(&self, rhs: BorrowedBmoc) -> MutableBmoc {
         ops::minus(self.as_borrowed(), rhs)

@@ -19,7 +19,7 @@ use super::{
 ///
 /// So this radius is smaller than the smaller circumcircle radius (=> no cone having the smaller
 /// edge-to-opposite-edge-radius radius can contains the 4 vertices of a cell (but 3 is ok))
-static SMALLER_EDGE2OPEDGE_DIST: [f64; 30] = [
+pub(crate) static SMALLER_EDGE2OPEDGE_DIST: [f64; 30] = [
     8.410686705679302e-1,  // depth = 0
     3.7723631722170065e-1, // depth = 1
     1.8203364957037313e-1, // depth = 2

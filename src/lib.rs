@@ -1,11 +1,14 @@
 pub mod bmoc;
 pub mod checked;
 pub mod coords;
+pub mod coverage;
 pub mod dir;
 pub mod geo;
 mod hash;
 pub mod neighbor;
 pub mod proj;
+mod special_points_finder;
+pub mod sph_geom;
 pub mod unchecked;
 pub mod zoc;
 

@@ -271,7 +271,10 @@ impl MutableBmoc<false> {
         hash_max: u64,
         is_full: bool,
     ) -> &mut Self {
-        debug_assert!(hash_max >= hash_min, "Invalid hash range");
+        debug_assert!(
+            hash_max >= hash_min,
+            "Invalid hash range: {hash_min} > {hash_max}"
+        );
         self.entries.reserve((hash_max - hash_min) as _);
         self.entries.extend(
             (hash_min..hash_max).map(|hash| encode_raw_value(depth, hash, is_full, self.max_depth)),

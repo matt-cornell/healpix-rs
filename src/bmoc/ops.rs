@@ -5,6 +5,7 @@ type CellIter<'a> = iter::CellIter<iter::SliceIter<'a>>;
 
 #[inline(never)]
 pub fn not(max_depth: u8, entries: &[u64]) -> MutableBmoc {
+    println!("not()");
     // Worst case: only 1 sub-cell by cell in the MOC (+11 for depth 0)
     let mut builder = MutableBmoc::<false>::with_capacity(max_depth, 3 * entries.len() + 12);
     // Empty MOC, easy
@@ -36,7 +37,7 @@ pub fn not(max_depth: u8, entries: &[u64]) -> MutableBmoc {
     // After last
     let delta_depth = d;
     go_up(&mut d, &mut h, delta_depth, true, &mut builder); // go up to depth 0
-    builder.push_all_unchecked(0, 0, 12, true);
+    builder.push_all_unchecked(0, h, 12, true);
     builder.into_valid_unchecked()
 }
 
@@ -515,17 +516,19 @@ fn go_up(
     flag: bool,
     builder: &mut MutableBmoc<false>,
 ) {
-    // let output_depth = *start_depth - delta_depth;       // For debug only
-    // let output_hash = (*start_hash >> (delta_depth << 1)) + 1; // For debug only
+    let output_depth = *start_depth - delta_depth; // For debug only
+    let output_hash = (*start_hash >> (delta_depth << 1)) + 1; // For debug only
     for _ in 0_u8..delta_depth {
         let target_hash = *start_hash | 3_u64;
-        builder.push_all_unchecked(*start_depth, *start_hash + 1, target_hash + 1, flag);
+        for h in (*start_hash + 1)..=target_hash {
+            builder.push_unchecked(*start_depth, h, flag);
+        }
         *start_hash >>= 2;
         *start_depth -= 1;
     }
     *start_hash += 1;
-    // debug_assert_eq!(*start_depth, output_depth);
-    // debug_assert_eq!(*start_hash, output_hash);
+    debug_assert_eq!(*start_depth, output_depth);
+    debug_assert_eq!(*start_hash, output_hash);
 }
 
 fn go_down(
@@ -536,12 +539,17 @@ fn go_down(
     flag: bool,
     builder: &mut MutableBmoc<false>,
 ) {
-    debug_assert!(target_depth >= *start_depth);
+    debug_assert!(
+        target_depth >= *start_depth,
+        "starting depth {start_depth} < target depth {target_depth}"
+    );
     let mut twice_dd = (target_depth - *start_depth) << 1;
     for d in *start_depth..=target_depth {
         //range(0, target_depth - start_depth).rev() {
         let target_h_at_d = target_hash >> twice_dd;
-        builder.push_all_unchecked(d, *start_hash, target_h_at_d, flag);
+        for h in *start_hash..target_h_at_d {
+            builder.push_unchecked(d, h, flag);
+        }
         if d != target_depth {
             *start_hash = target_h_at_d << 2;
             twice_dd -= 2;

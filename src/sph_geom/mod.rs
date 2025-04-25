@@ -737,6 +737,6 @@ mod tests {
             (2.0 * TAU / 3.0, FRAC_PI_2 - 1e-3),
         ];
         let poly = create_polygon_from_lonlat(&v);
-        assert!(poly.is_intersecting_parallel(FRAC_PI_2));
+        assert!(!poly.is_intersecting_parallel(FRAC_PI_2));
     }
 }

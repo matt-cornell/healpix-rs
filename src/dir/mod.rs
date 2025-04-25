@@ -335,18 +335,18 @@ impl Direction {
     #[inline(always)]
     pub const fn se(self) -> PosOrNeg {
         match self {
-            Self::NW | Self::N | Self::W => PosOrNeg::Neg,
-            Self::SE | Self::S | Self::E => PosOrNeg::Pos,
-            Self::NE | Self::SW => PosOrNeg::Zero,
+            Self::S | Self::W | Self::SW => PosOrNeg::Neg,
+            Self::N | Self::E | Self::NE => PosOrNeg::Pos,
+            Self::NW | Self::SE => PosOrNeg::Zero,
         }
     }
     /// Get the offset to the southwest.
     #[inline(always)]
     pub const fn sw(self) -> PosOrNeg {
         match self {
-            Self::NE | Self::N | Self::E => PosOrNeg::Neg,
-            Self::SW | Self::S | Self::W => PosOrNeg::Pos,
-            Self::NW | Self::SE => PosOrNeg::Zero,
+            Self::S | Self::E | Self::SE => PosOrNeg::Neg,
+            Self::N | Self::W | Self::NW => PosOrNeg::Pos,
+            Self::NE | Self::SW => PosOrNeg::Zero,
         }
     }
     /// Try to create find a direction from X- and Y- directions.
@@ -368,13 +368,13 @@ impl Direction {
     #[inline(always)]
     pub const fn from_sesw(se: PosOrNeg, sw: PosOrNeg) -> Option<Self> {
         match [se, sw] {
-            [PosOrNeg::Zero, PosOrNeg::Pos] => Some(Self::SW),
-            [PosOrNeg::Pos, PosOrNeg::Pos] => Some(Self::S),
-            [PosOrNeg::Pos, PosOrNeg::Zero] => Some(Self::SE),
+            [PosOrNeg::Zero, PosOrNeg::Pos] => Some(Self::NW),
+            [PosOrNeg::Pos, PosOrNeg::Pos] => Some(Self::N),
+            [PosOrNeg::Pos, PosOrNeg::Zero] => Some(Self::NE),
             [PosOrNeg::Pos, PosOrNeg::Neg] => Some(Self::E),
-            [PosOrNeg::Zero, PosOrNeg::Neg] => Some(Self::NE),
-            [PosOrNeg::Neg, PosOrNeg::Neg] => Some(Self::N),
-            [PosOrNeg::Neg, PosOrNeg::Zero] => Some(Self::NW),
+            [PosOrNeg::Zero, PosOrNeg::Neg] => Some(Self::SE),
+            [PosOrNeg::Neg, PosOrNeg::Neg] => Some(Self::S),
+            [PosOrNeg::Neg, PosOrNeg::Zero] => Some(Self::SW),
             [PosOrNeg::Neg, PosOrNeg::Pos] => Some(Self::W),
             _ => None,
         }

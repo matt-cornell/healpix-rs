@@ -3,8 +3,15 @@ name = "healpix"
 version = "0.1.0"
 edition = "2024"
 license = "MIT OR Apache-2.0"
+exclude = [
+  "makeDoc.bash",
+  "resources/4doc",
+]
 
 [dependencies]
 arrayvec = "0.7.6"
 either = "1.15.0"
 triomphe = { version = "0.1.14", default-features = false }
+
+[package.metadata.docs.rs]
+rustdoc-args = ["--html-in-header", "katex.html"]

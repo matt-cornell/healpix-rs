@@ -500,7 +500,6 @@ impl super::Layer {
         sorted: bool,
         dest: &mut Vec<u64>,
     ) {
-        let start = dest.len();
         //} -> Box<[u64]> {
         self.check_hash(hash);
         if delta_depth == 0 {

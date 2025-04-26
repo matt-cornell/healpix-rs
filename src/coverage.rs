@@ -155,8 +155,7 @@ impl super::Layer {
             }
             false
         };
-        let arr @ [(l_s, b_s), (l_e, b_e), (l_n, b_n), (l_w, b_w)] =
-            Self::get(depth).vertices(hash);
+        let [(l_s, b_s), (l_e, b_e), (l_n, b_n), (l_w, b_w)] = Self::get(depth).vertices(hash);
         let n_in = zone.contains(l_s, b_s) as u8
             + zone.contains_exclusive(l_e, b_e) as u8
             + zone.contains_exclusive(l_n, b_n) as u8

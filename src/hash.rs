@@ -271,7 +271,7 @@ impl super::Layer {
         let (mut x, mut y) = self.center_of_projected_cell(hash);
         x += (dx - dy) * self.one_over_nside;
         y += (dx + dy - 1.0) * self.one_over_nside;
-        proj::unproj(x % 8.0, y)
+        proj::unproj(x.rem_euclid(8.0), y)
     }
 
     #[inline]

@@ -350,10 +350,10 @@ impl Layer {
         let (x, y) = self.center_of_projected_cell(hash);
         let t = self.one_over_nside;
         [
-            proj::unproj(x, y - t),         // S
-            proj::unproj(x + t, y),         // E
-            proj::unproj(x, y + t),         // N
-            proj::unproj((x - t) % 8.0, y), // W
+            proj::unproj(x, y - t),                   // S
+            proj::unproj(x + t, y),                   // E
+            proj::unproj(x, y + t),                   // N
+            proj::unproj((x - t).rem_euclid(8.0), y), // W
         ]
     }
 
@@ -489,7 +489,7 @@ impl Layer {
             let k = i as f64;
             let x = proj_center.0 + from_offset_x + k * step_x;
             let y = proj_center.1 + from_offset_y + k * step_y;
-            path_points.push(proj::unproj(x % 8.0, y));
+            path_points.push(proj::unproj(x.rem_euclid(8.0), y));
         }
     }
 
@@ -632,7 +632,7 @@ impl Layer {
     ) -> (f64, f64) {
         let x = center_x + vertex_direction.x() * self.one_over_nside;
         let y = center_y + vertex_direction.y() * self.one_over_nside;
-        proj::unproj(x % 8.0, y)
+        proj::unproj(x.rem_euclid(8.0), y)
     }
 
     #[inline]

@@ -409,7 +409,7 @@ pub fn proj(lon: f64, lat: f64) -> (f64, f64) {
 /// assert_eq!(base_cell_from_proj_coo(7.0, -1.0), 11);
 /// ```
 pub fn base_cell_from_proj_coo(x: f64, y: f64) -> u8 {
-    let mut x = 0.5 * x % 8.0;
+    let mut x = 0.5 * x.rem_euclid(8.0);
     let mut y = 0.5 * (y + 3.0);
     let mut i = x as u8;
     debug_assert!(i < 4); // if can be == 4, then (x as u8) & 3

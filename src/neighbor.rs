@@ -475,20 +475,14 @@ impl super::Layer {
     /// let delta_depth = 2;
     ///
     /// let hash = 10;
-    /// let actual_res = Layer::get(depth).external_edge(hash, delta_depth, false);
+    /// let actual_res = Layer::get(depth).external_edge(hash, delta_depth, true);
     /// let expected_res: [u64; 19] = [85, 87, 93, 95, 117, 138, 139, 142, 143, 154, 176, 178, 184, 186, 415, 437, 439, 445, 447];
-    /// for (h1, h2) in actual_res.iter().zip(expected_res.iter()) {
-    ///   assert_eq!(h1, h2);
-    /// }
-    /// assert_eq!(expected_res.len(), actual_res.len());
+    /// assert_eq!(actual_res, expected_res);
     ///
     /// let hash = 11;
     /// let actual_res = Layer::get(depth).external_edge(hash, delta_depth, true);
     /// let expected_res: [u64; 20] = [63, 95, 117, 119, 125, 127, 143, 154, 155, 158, 159, 165, 167, 173, 175, 239, 250, 251, 254, 255];
-    /// for (h1, h2) in actual_res.iter().zip(expected_res.iter()) {
-    ///   assert_eq!(h1, h2);
-    /// }
-    /// assert_eq!(expected_res.len(), actual_res.len());
+    /// assert_eq!(actual_res, expected_res);
     ///
     /// ```
     pub fn external_edge(&self, hash: u64, delta_depth: u8, sorted: bool) -> Vec<u64> {
@@ -506,6 +500,7 @@ impl super::Layer {
         sorted: bool,
         dest: &mut Vec<u64>,
     ) {
+        let start = dest.len();
         //} -> Box<[u64]> {
         self.check_hash(hash);
         if delta_depth == 0 {
@@ -528,7 +523,7 @@ impl super::Layer {
             self.edge_cell_neighbors(hash, &mut neighbors);
             let mut neighbors = neighbors.into_iter().collect::<arrayvec::ArrayVec<_, 8>>();
             if sorted {
-                neighbors.sort();
+                neighbors.sort_unstable_by_key(|v| v.1);
             }
             let h_parts: HashParts = self.decode_hash(hash);
             for (direction, hash_value) in neighbors {
@@ -539,7 +534,8 @@ impl super::Layer {
                 } else {
                     edge_cell_direction_from_neighbor(
                         h_parts.d0h,
-                        self.direction_in_base_cell_border(h_bits.i, h_bits.j),
+                        self.direction_in_base_cell_border(h_bits.i, h_bits.j)
+                            .expect("No for current cell"),
                         direction,
                     )
                 };
@@ -551,7 +547,7 @@ impl super::Layer {
             self.inner_cell_neighbors(h_bits.d0h, h_bits.i, h_bits.j, &mut neighbors);
             let mut neighbors = neighbors.into_iter().collect::<arrayvec::ArrayVec<_, 8>>();
             if sorted {
-                neighbors.sort();
+                neighbors.sort_unstable_by_key(|v| v.1);
             }
             for (direction, hash_value) in neighbors {
                 append_sorted_internal_edge_element(
@@ -578,7 +574,7 @@ impl super::Layer {
         &self,
         i_in_base_cell_bits: u64,
         j_in_base_cell_bits: u64,
-    ) -> Direction {
+    ) -> Option<Direction> {
         let i = if 0_u64 == i_in_base_cell_bits {
             0
         } else if i_in_base_cell_bits == self.x_mask {
@@ -593,7 +589,10 @@ impl super::Layer {
         } else {
             1
         };
-        Direction::from_index(3 * j + i)
+        // S SE E
+        // SW C NE
+        // W NW N
+        Direction::try_from_index([4, 3, 2, 5, u8::MAX, 1, 6, 7, 0][3 * j + i])
     }
 
     fn inner_cell_neighbors(
@@ -688,7 +687,7 @@ impl super::Layer {
         let d0_neighbor_dir = Direction::from_sesw(
             self.neighbor_base_cell_offset(i),
             self.neighbor_base_cell_offset(j),
-        )?;
+        );
         self.neighbor_from_shifted_coos(d0h, i as u32, j as u32, d0_neighbor_dir)
     }
 
@@ -725,14 +724,19 @@ impl super::Layer {
         d0h: u8,
         i: u32,
         j: u32,
-        base_cell_neighbor_dir: Direction,
+        base_cell_neighbor_dir: Option<Direction>,
     ) -> Option<u64> {
-        let d0h_mod_4 = d0h & 0b11;
-        match d0h >> 2 {
-            0 => self.npc_neighbor(d0h_mod_4, i, j, base_cell_neighbor_dir),
-            1 => self.eqr_neighbor(d0h_mod_4, i, j, base_cell_neighbor_dir),
-            2 => self.spc_neighbor(d0h_mod_4, i, j, base_cell_neighbor_dir),
-            _ => unreachable!("Base cell must be in [0, 12["),
+        if let Some(dir) = base_cell_neighbor_dir {
+            let d0h_mod_4 = d0h & 0b11;
+            match d0h >> 2 {
+                0 => self.npc_neighbor(d0h_mod_4, i, j, dir),
+                1 => self.eqr_neighbor(d0h_mod_4, i, j, dir),
+                2 => self.spc_neighbor(d0h_mod_4, i, j, dir),
+                _ => unreachable!("Base cell must be in [0, 12["),
+            }
+        } else {
+            debug_assert!(i < self.nside && j < self.nside);
+            Some(self.build_hash_from_parts(d0h, i, j))
         }
     }
     fn npc_neighbor(

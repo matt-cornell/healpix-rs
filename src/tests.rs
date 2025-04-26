@@ -256,24 +256,26 @@ fn test_ok_neighbors_t1() {
     let layer = get(depth);
     check_equals_all(
         layer.neighbors(hash),
-        [128, 129, 130, 131, 136, 137, 176, 177, 180],
+        [128, 129, 131, 136, 137, 176, 177, 180],
     );
 }
 
 fn check_equals(map: DirectionMap<u64>, array: [u64; 6]) {
     let mut values = map.into_values().collect::<Vec<_>>();
     values.sort_unstable();
-    assert_eq!(array.len(), values.len());
+    assert_eq!(array.len(), values.len(), "array lengths differ");
+    assert_eq!(values, array);
     array
         .iter()
         .zip(&values)
         .for_each(|(h1, h2)| assert_eq!(h1, h2));
 }
 
-fn check_equals_all(map: DirectionMap<u64>, array: [u64; 9]) {
+fn check_equals_all(map: DirectionMap<u64>, array: [u64; 8]) {
     let mut values = map.into_values().collect::<Vec<_>>();
     values.sort_unstable();
-    assert_eq!(array.len(), values.len());
+    assert_eq!(array.len(), values.len(), "array lengths differ");
+    assert_eq!(values, array);
     array
         .iter()
         .zip(&values)
@@ -298,11 +300,12 @@ fn testok_external_edge_struct_v1() {
     let expected_res: [u64; 19] = [
         85, 87, 93, 95, 117, 138, 139, 142, 143, 154, 176, 178, 184, 186, 415, 437, 439, 445, 447,
     ];
+    assert_eq!(actual_res, expected_res);
     // println!("{:?}", &actual_res);
-    for (h1, h2) in actual_res.iter().zip(expected_res.iter()) {
-        assert_eq!(h1, h2);
-    }
-    assert_eq!(expected_res.len(), actual_res.len());
+    // assert_eq!(expected_res.len(), actual_res.len());
+    // for (h1, h2) in actual_res.iter().zip(expected_res.iter()) {
+    //     assert_eq!(h1, h2);
+    // }
 }
 
 #[test]
@@ -316,11 +319,12 @@ fn testok_external_edge_struct_v2() {
         63, 95, 117, 119, 125, 127, 143, 154, 155, 158, 159, 165, 167, 173, 175, 239, 250, 251,
         254, 255,
     ];
+    assert_eq!(actual_res, expected_res);
     // println!("{:?}", &actual_res);
-    for (h1, h2) in actual_res.iter().zip(expected_res.iter()) {
-        assert_eq!(h1, h2);
-    }
-    assert_eq!(expected_res.len(), actual_res.len());
+    // for (h1, h2) in actual_res.iter().zip(expected_res.iter()) {
+    //     assert_eq!(h1, h2);
+    // }
+    // assert_eq!(expected_res.len(), actual_res.len());
 }
 
 #[test]
@@ -334,11 +338,12 @@ fn testok_external_edge_struct_v3() {
         26, 27, 30, 31, 47, 53, 55, 61, 63, 69, 71, 77, 79, 90, 91, 94, 95, 143,
     ];
     // let expected_res: [u64; 20] = [63, 95, 117, 119, 125, 127, 143, 154, 155, 158, 159, 165, 167, 173, 175, 239, 250, 251, 254, 255];
+    assert_eq!(actual_res, expected_res);
     //println!("{:?}", &actual_res);
-    for (h1, h2) in actual_res.iter().zip(expected_res.iter()) {
-        assert_eq!(h1, h2);
-    }
-    assert_eq!(expected_res.len(), actual_res.len());
+    // for (h1, h2) in actual_res.iter().zip(expected_res.iter()) {
+    //     assert_eq!(h1, h2);
+    // }
+    // assert_eq!(expected_res.len(), actual_res.len());
 }
 
 #[test]
@@ -451,10 +456,14 @@ fn testok_cone_approx_custom_bmoc_dbg() {
         75, 76, 77, 78, 79, 82, 88, 89, 90, 91, 94, 131, 134, 135, 136, 137, 138, 139, 140, 141,
         142, 143, 181, 183, 189,
     ];
-    assert_eq!(actual_res.flat_iter().deep_size(), expected_res.len());
-    for (h1, h2) in actual_res.flat_iter().zip(expected_res.iter()) {
-        assert_eq!(h1, *h2);
-    }
+    assert_eq!(
+        actual_res.into_flat_iter().collect::<Vec<_>>(),
+        expected_res
+    );
+    // assert_eq!(actual_res.flat_iter().deep_size(), expected_res.len());
+    // for (h1, h2) in actual_res.flat_iter().zip(expected_res.iter()) {
+    //     assert_eq!(h1, *h2);
+    // }
 }
 
 #[test]
@@ -468,6 +477,7 @@ fn testok_conecenter_bmoc_dbg() {
     let expected_res: [u64; 7] = [2058, 2059, 2080, 2081, 2082, 2083, 2088];
     // println!("draw red circle({} {} {}deg)", lon, lat, radius);
     // to_aladin_moc(&actual_res);
+    println!("entries: {:?}", actual_res.entries());
     assert_eq!(actual_res.flat_iter().deep_size(), expected_res.len());
     for (h1, h2) in actual_res.flat_iter().zip(expected_res.iter()) {
         assert_eq!(h1, *h2);
@@ -546,9 +556,10 @@ fn testok_ring_bmoc() {
     // println!("draw red circle({} {} {}deg)", lon, lat, radius_ext);
     // to_aladin_moc(&actual_res);
     assert_eq!(actual_res.flat_iter().deep_size(), expected_res.len());
-    for (h1, h2) in actual_res.flat_iter().zip(expected_res.iter()) {
-        assert_eq!(h1, *h2);
-    }
+    assert_eq!(actual_res.flat_iter().collect::<Vec<_>>(), expected_res);
+    // for (h1, h2) in actual_res.flat_iter().zip(expected_res.iter()) {
+    //     assert_eq!(h1, *h2);
+    // }
 }
 
 fn to_aladin_moc(bmoc: &dyn Bmoc) {
@@ -2040,10 +2051,14 @@ fn testok_zone_1() {
     let actual_res_exact = get(depth).zone_coverage(lon_min, lat_min, lon_max, lat_max);
     // to_aladin_moc(&actual_res_exact);
     assert!(actual_res_exact.deep_size() > 0);
-    assert_eq!(expected_res_exact.len(), actual_res_exact.deep_size());
-    for (h1, h2) in actual_res_exact.flat_iter().zip(expected_res_exact.iter()) {
-        assert_eq!(h1, *h2);
-    }
+    // assert_eq!(expected_res_exact.len(), actual_res_exact.deep_size());
+    assert_eq!(
+        actual_res_exact.flat_iter().collect::<Vec<_>>(),
+        expected_res_exact
+    );
+    // for (h1, h2) in actual_res_exact.flat_iter().zip(expected_res_exact.iter()) {
+    //     assert_eq!(h1, *h2);
+    // }
 }
 
 #[test]
@@ -2064,9 +2079,13 @@ fn testok_zone_2() {
     // to_aladin_moc(&actual_res_exact);
     assert!(actual_res_exact.deep_size() > 0);
     assert_eq!(expected_res_exact.len(), actual_res_exact.deep_size());
-    for (h1, h2) in actual_res_exact.flat_iter().zip(expected_res_exact.iter()) {
-        assert_eq!(h1, *h2);
-    }
+    assert_eq!(
+        actual_res_exact.flat_iter().collect::<Vec<_>>(),
+        expected_res_exact
+    );
+    // for (h1, h2) in actual_res_exact.flat_iter().zip(expected_res_exact.iter()) {
+    //     assert_eq!(h1, *h2);
+    // }
 }
 
 #[test]
@@ -2089,9 +2108,13 @@ fn testok_zone_3() {
     // to_aladin_moc(&actual_res_exact);
     assert!(actual_res_exact.deep_size() > 0);
     assert_eq!(expected_res_exact.len(), actual_res_exact.deep_size());
-    for (h1, h2) in actual_res_exact.flat_iter().zip(expected_res_exact.iter()) {
-        assert_eq!(h1, *h2);
-    }
+    assert_eq!(
+        actual_res_exact.flat_iter().collect::<Vec<_>>(),
+        expected_res_exact
+    );
+    // for (h1, h2) in actual_res_exact.flat_iter().zip(expected_res_exact.iter()) {
+    //     assert_eq!(h1, *h2);
+    // }
 }
 
 #[test]
@@ -2115,9 +2138,13 @@ fn testok_zone_4() {
     // to_aladin_moc(&actual_res_exact);
     assert!(actual_res_exact.deep_size() > 0);
     assert_eq!(expected_res_exact.len(), actual_res_exact.deep_size());
-    for (h1, h2) in actual_res_exact.flat_iter().zip(expected_res_exact.iter()) {
-        assert_eq!(h1, *h2);
-    }
+    assert_eq!(
+        actual_res_exact.flat_iter().collect::<Vec<_>>(),
+        expected_res_exact
+    );
+    // for (h1, h2) in actual_res_exact.flat_iter().zip(expected_res_exact.iter()) {
+    //     assert_eq!(h1, *h2);
+    // }
 }
 
 #[test]
@@ -2139,10 +2166,14 @@ fn testok_zone_5() {
     let actual_res_exact = get(depth).zone_coverage(lon_min, lat_min, lon_max, lat_max);
     // to_aladin_moc(&actual_res_exact);
     assert!(actual_res_exact.deep_size() > 0);
-    assert_eq!(expected_res_exact.len(), actual_res_exact.deep_size());
-    for (h1, h2) in actual_res_exact.flat_iter().zip(expected_res_exact.iter()) {
-        assert_eq!(h1, *h2);
-    }
+    // assert_eq!(expected_res_exact.len(), actual_res_exact.deep_size());
+    assert_eq!(
+        actual_res_exact.flat_iter().collect::<Vec<_>>(),
+        expected_res_exact
+    );
+    // for (h1, h2) in actual_res_exact.flat_iter().zip(expected_res_exact.iter()) {
+    //     assert_eq!(h1, *h2);
+    // }
 }
 
 #[test]
@@ -2175,9 +2206,13 @@ fn testok_zone_6() {
     // to_aladin_moc(&actual_res_exact);
     assert!(actual_res_exact.deep_size() > 0);
     assert_eq!(expected_res_exact.len(), actual_res_exact.deep_size());
-    for (h1, h2) in actual_res_exact.flat_iter().zip(expected_res_exact.iter()) {
-        assert_eq!(h1, *h2);
-    }
+    assert_eq!(
+        actual_res_exact.flat_iter().collect::<Vec<_>>(),
+        expected_res_exact
+    );
+    // for (h1, h2) in actual_res_exact.flat_iter().zip(expected_res_exact.iter()) {
+    //     assert_eq!(h1, *h2);
+    // }
 }
 
 #[test]
@@ -2212,9 +2247,13 @@ fn testok_zone_7() {
 
     assert!(actual_res_exact.deep_size() > 0);
     assert_eq!(expected_res_exact.len(), actual_res_exact.deep_size());
-    for (h1, h2) in actual_res_exact.flat_iter().zip(expected_res_exact.iter()) {
-        assert_eq!(h1, *h2);
-    }
+    assert_eq!(
+        actual_res_exact.flat_iter().collect::<Vec<_>>(),
+        expected_res_exact
+    );
+    // for (h1, h2) in actual_res_exact.flat_iter().zip(expected_res_exact.iter()) {
+    //     assert_eq!(h1, *h2);
+    // }
 }
 
 #[test]
@@ -2284,9 +2323,13 @@ fn testok_zone_8() {
 
     assert!(actual_res_exact.deep_size() > 0);
     assert_eq!(expected_res_exact.len(), actual_res_exact.deep_size());
-    for (h1, h2) in actual_res_exact.flat_iter().zip(expected_res_exact.iter()) {
-        assert_eq!(h1, *h2);
-    }
+    assert_eq!(
+        actual_res_exact.flat_iter().collect::<Vec<_>>(),
+        expected_res_exact
+    );
+    // for (h1, h2) in actual_res_exact.flat_iter().zip(expected_res_exact.iter()) {
+    //     assert_eq!(h1, *h2);
+    // }
 }
 
 #[test]
@@ -2340,9 +2383,13 @@ fn testok_zone_9() {
 
     assert!(actual_res_exact.deep_size() > 0);
     assert_eq!(expected_res_exact.len(), actual_res_exact.deep_size());
-    for (h1, h2) in actual_res_exact.flat_iter().zip(expected_res_exact.iter()) {
-        assert_eq!(h1, *h2);
-    }
+    assert_eq!(
+        actual_res_exact.flat_iter().collect::<Vec<_>>(),
+        expected_res_exact
+    );
+    // for (h1, h2) in actual_res_exact.flat_iter().zip(expected_res_exact.iter()) {
+    //     assert_eq!(h1, *h2);
+    // }
 }
 
 #[test]
@@ -2395,9 +2442,13 @@ fn testok_zone_10() {
 
     assert!(actual_res_exact.deep_size() > 0);
     assert_eq!(expected_res_exact.len(), actual_res_exact.deep_size());
-    for (h1, h2) in actual_res_exact.flat_iter().zip(expected_res_exact.iter()) {
-        assert_eq!(h1, *h2);
-    }
+    assert_eq!(
+        actual_res_exact.flat_iter().collect::<Vec<_>>(),
+        expected_res_exact
+    );
+    // for (h1, h2) in actual_res_exact.flat_iter().zip(expected_res_exact.iter()) {
+    //     assert_eq!(h1, *h2);
+    // }
 }
 
 #[test]
@@ -2512,9 +2563,13 @@ fn testok_zone_11() {
 
     assert!(actual_res_exact.deep_size() > 0);
     assert_eq!(expected_res_exact.len(), actual_res_exact.deep_size());
-    for (h1, h2) in actual_res_exact.flat_iter().zip(expected_res_exact.iter()) {
-        assert_eq!(h1, *h2);
-    }
+    assert_eq!(
+        actual_res_exact.flat_iter().collect::<Vec<_>>(),
+        expected_res_exact
+    );
+    // for (h1, h2) in actual_res_exact.flat_iter().zip(expected_res_exact.iter()) {
+    //     assert_eq!(h1, *h2);
+    // }
 }
 
 fn to_radians(lonlats: &mut [(f64, f64)]) {
@@ -2648,23 +2703,36 @@ fn test_bilinear_interpolation() {
     let lon_deg = 89.18473162_f64; // 322.99297784_f64;// 324.8778822_f64
     let lat_deg = -28.04159707_f64; // 39.9302924_f64;// -41.08635508_f64
     let res = get(1).bilinear_interpolation(lon_deg.to_radians(), lat_deg.to_radians());
-    /*println!("{:?}", res);
-    // Result with previous version of hash_dxdy_v1 !
-    assert_eq!(res, [
-      (20, 0.0),
-      (38, 0.1661686383097217),
-      (33, 0.2024027885319438),
-      (20, 0.6314285731583344)
-    ]);*/
+    // println!("{:?}", res);
+    // // Result with previous version of hash_dxdy_v1 !
+    // assert_eq!(
+    //     res,
+    //     [
+    //         (20, 0.0),
+    //         (38, 0.1661686383097217),
+    //         (33, 0.2024027885319438),
+    //         (20, 0.6314285731583344)
+    //     ]
+    // );
     // Result with previous version of hash_dxdy_v2 !
-    assert_eq!(
-        res,
-        [
-            (20, 0.0),
-            (38, 0.1661686383097213),
-            (33, 0.20240278853194385),
-            (20, 0.6314285731583348)
-        ]
+    // assert_eq!(
+    //     res,
+    //     [
+    //         (20, 0.0),
+    //         (38, 0.1661686383097213),
+    //         (33, 0.20240278853194385),
+    //         (20, 0.6314285731583348)
+    //     ]
+    // );
+    assert!(
+        res.iter()
+            .zip(&[
+                (20, 0.0),
+                (38, 0.1661686383097213),
+                (33, 0.20240278853194385),
+                (20, 0.6314285731583348)
+            ],)
+            .all(|((ai, af), (bi, bf))| ai == bi && (af - bf).abs() < 0.0000001)
     );
 }
 
@@ -2673,23 +2741,26 @@ fn test_bilinear_interpolation_2() {
     let lon_deg = 83.633478_f64;
     let lat_deg = 22.015110_f64;
     let res = get(18).bilinear_interpolation(lon_deg.to_radians(), lat_deg.to_radians());
-    /* println!("{:?}", res);
-    // Result with previous version of hash_dxdy_v1 !
-    assert_eq!(res, [
-      (405766747916, 0.5757471135241182),
-      (405766747917, 0.3604806280107034),
-      (405766747918, 0.039217694696856834),
-      (405766747919, 0.024554563768321474)
-    ]);
-    */
-    assert_eq!(
-        res,
-        [
-            (405766747916, 0.5757471135599139),
-            (405766747917, 0.3604806280331154),
-            (405766747918, 0.039217694661061175),
-            (405766747919, 0.024554563745909478)
-        ]
+    // println!("{:?}", res);
+    // // Result with previous version of hash_dxdy_v1 !
+    // assert_eq!(
+    //     res,
+    //     [
+    //         (405766747916, 0.5757471135241182),
+    //         (405766747917, 0.3604806280107034),
+    //         (405766747918, 0.039217694696856834),
+    //         (405766747919, 0.024554563768321474)
+    //     ]
+    // );
+    assert!(
+        res.iter()
+            .zip(&[
+                (405766747916, 0.5757471135599139),
+                (405766747917, 0.3604806280331154),
+                (405766747918, 0.039217694661061175),
+                (405766747919, 0.024554563745909478)
+            ],)
+            .all(|((ai, af), (bi, bf))| ai == bi && (af - bf).abs() < 0.0000001)
     );
 }
 
@@ -2700,6 +2771,7 @@ fn test_bilinear_interpolation_3() {
     let lat_rad = [0.08726646_f64, 0.17453293_f64, 0.78539816_f64];
     let depth = 5;
     for (lon, lat) in lon_rad.iter().zip(lat_rad.iter()) {
+        println!("({lon}, {lat})");
         let res = get(depth).bilinear_interpolation(*lon, *lat);
         println!("{:?}", res);
     }

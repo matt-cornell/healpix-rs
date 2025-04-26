@@ -56,7 +56,13 @@ impl super::Layer {
                     let d = best_starting_depth(mec.radius()).min(self.depth);
                     let layer = Self::get(d);
                     let h = layer.hash(center.lon(), center.lat());
-                    (d, either::Left(layer.neighbors(h).into_values()))
+                    let mut vals = layer
+                        .neighbors(h)
+                        .into_values()
+                        .collect::<ArrayVec<u64, 9>>();
+                    vals.push(h);
+                    vals.sort_unstable();
+                    (d, either::Left(vals.into_iter()))
                 } else {
                     (0, either::Right(0..12))
                 }
@@ -149,7 +155,8 @@ impl super::Layer {
             }
             false
         };
-        let [(l_s, b_s), (l_e, b_e), (l_n, b_n), (l_w, b_w)] = Self::get(depth).vertices(hash);
+        let arr @ [(l_s, b_s), (l_e, b_e), (l_n, b_n), (l_w, b_w)] =
+            Self::get(depth).vertices(hash);
         let n_in = zone.contains(l_s, b_s) as u8
             + zone.contains_exclusive(l_e, b_e) as u8
             + zone.contains_exclusive(l_n, b_n) as u8
@@ -180,34 +187,15 @@ impl super::Layer {
             } else {
                 let hash = hash << 2;
                 let depth = depth + 1;
-                self.zone_coverage_recur(
-                    depth,
-                    hash,
-                    zone,
-                    zone_vertices_hashes_flags,
-                    bmoc_builder,
-                );
-                self.zone_coverage_recur(
-                    depth,
-                    hash | 1_u64,
-                    zone,
-                    zone_vertices_hashes_flags,
-                    bmoc_builder,
-                );
-                self.zone_coverage_recur(
-                    depth,
-                    hash | 2_u64,
-                    zone,
-                    zone_vertices_hashes_flags,
-                    bmoc_builder,
-                );
-                self.zone_coverage_recur(
-                    depth,
-                    hash | 3_u64,
-                    zone,
-                    zone_vertices_hashes_flags,
-                    bmoc_builder,
-                );
+                for mask in 0..4 {
+                    self.zone_coverage_recur(
+                        depth,
+                        hash | mask,
+                        zone,
+                        zone_vertices_hashes_flags,
+                        bmoc_builder,
+                    );
+                }
             }
         }
     }
@@ -317,6 +305,7 @@ impl super::Layer {
                 .neighbors(root_center_hash)
                 .into_values()
                 .collect();
+            neigs.push(root_center_hash);
             neigs.sort_unstable(); // TODO: check if this sort is necessary
             let mut bmoc_builder = MutableBmoc::with_capacity(
                 self.depth,

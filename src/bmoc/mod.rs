@@ -150,6 +150,7 @@ impl<const VALID: bool> MutableBmoc<VALID> {
                 }
                 curr_to_index = i_curr_moc;
             }
+            self.entries.truncate(curr_to_index);
         }
     }
     pub fn into_packed(mut self) -> MutableBmoc<true> {

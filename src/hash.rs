@@ -14,12 +14,12 @@ impl super::Layer {
     ///   If `lat` **not in** `[-pi/2, pi/2]`, this method panics.
     /// # Examples
     /// ```rust
-    /// use healpix::{nside};
-    /// use healpix::nested::{get, Layer};
+    /// use healpix::checked::nside;
+    /// use healpix::get;
     ///
     /// let depth = 12_u8;
     /// let nside = nside(depth) as u64;
-    /// let nested12: &Layer = get(depth);
+    /// let nested12 = get(depth);
     /// assert_eq!(nside * nside - 1, nested12.hash(12.5_f64.to_radians(), 89.99999_f64.to_radians()));
     /// ```
     pub fn hash(&self, lon: f64, lat: f64) -> u64 {
@@ -133,12 +133,12 @@ impl super::Layer {
     ///   If `lat` **not in** `[-pi/2, pi/2]`, this method panics.
     /// # Examples
     /// ```rust
-    /// use healpix::{nside};
-    /// use healpix::nested::{get, Layer};
+    /// use healpix::checked::nside;
+    /// use healpix::get;
     ///
     /// let depth = 12_u8;
     /// let nside = nside(depth) as u64;
-    /// let nested12: &Layer = get(depth);
+    /// let nested12 = get(depth);
     /// let h_org = nside * nside - 1;
     /// let (h_ra, h_dec) = nested12.center(h_org);
     /// let (h, dx, dy) = nested12.hash_with_dxdy(h_ra, h_dec);
@@ -207,9 +207,8 @@ impl super::Layer {
     ///
     /// # Example
     /// ```rust
-    /// use std::f64::consts::{PI};
-    /// use healpix::{TRANSITION_LATITUDE};
-    /// use healpix::nested::{get, Layer};
+    /// use std::f64::consts::PI;
+    /// use healpix::{TRANSITION_LATITUDE, get};
     ///
     /// fn dist(p1: (f64, f64), p2: (f64, f64)) -> f64 {
     ///   let sindlon = f64::sin(0.5 * (p2.0 - p1.0));
@@ -251,7 +250,7 @@ impl super::Layer {
     ///
     /// # Example
     /// ```rust
-    /// use healpix::nested::{get, Layer};
+    /// use healpix::get;
     ///
     /// fn dist(p1: (f64, f64), p2: (f64, f64)) -> f64 {
     ///   let sindlon = f64::sin(0.5 * (p2.0 - p1.0));

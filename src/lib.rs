@@ -29,16 +29,16 @@ use dir::{Cardinal, Direction};
 /// (4 bits for base cells + 2 bits per depth + 2 remaining bits (1 use in the unique notation).
 ///
 /// ```rust
-/// use healpix::{DEPTH_MAX};
-/// assert_eq!(29, DEPTH_MAX);
+/// use healpix::MAX_DEPTH;
+/// assert_eq!(29, MAX_DEPTH);
 /// ```
 pub const MAX_DEPTH: u8 = 29;
 /// Constant = nside(29), i.e. the largest possible nside available when we store HEALPix hash
 /// on a u64.
 ///
 /// ```rust
-/// use healpix::{DEPTH_MAX, NSIDE_MAX, nside};
-/// assert_eq!(nside(DEPTH_MAX), NSIDE_MAX);
+/// use healpix::{MAX_DEPTH, NSIDE_MAX, checked::nside};
+/// assert_eq!(nside(MAX_DEPTH), NSIDE_MAX);
 /// ```
 pub const NSIDE_MAX: u32 = 536870912;
 
@@ -150,34 +150,34 @@ pub const fn to_range(hash: u64, delta_depth: u8) -> std::ops::Range<u64> {
 
 /// mask ...010101
 /// ```rust
-/// use healpix::nested::{x_mask};
+/// use healpix::x_mask;
 /// assert_eq!(x_mask(3), 0b00010101);
 /// ```
 #[inline]
-const fn x_mask(depth: u8) -> u64 {
+pub const fn x_mask(depth: u8) -> u64 {
     0x0555555555555555_u64 >> (60 - (depth << 1))
 }
 
 /// mask ...101010
 /// ```rust
-/// use healpix::nested::{y_mask, x_mask};
+/// use healpix::{y_mask, x_mask};
 /// assert_eq!(y_mask(3), 0b00101010);
 /// assert_eq!(y_mask(3), x_mask(3) << 1);
 /// ```
 #[inline]
-const fn y_mask(depth: u8) -> u64 {
+pub const fn y_mask(depth: u8) -> u64 {
     0x0AAAAAAAAAAAAAAA_u64 >> (60 - (depth << 1))
 }
 
 /// mask ...111111
 /// ```rust
-/// use healpix::nested::{xy_mask};
+/// use healpix::xy_mask;
 /// assert_eq!(xy_mask(3), 0b00111111);
 /// let depth = 3_u8;
 /// assert_eq!(0xFFFFFFFFFFFFFFFF_u64 >> (64 - (depth << 1)), (1_u64 << (depth << 1)) - 1_u64);
 /// ```
 #[inline]
-const fn xy_mask(depth: u8) -> u64 {
+pub const fn xy_mask(depth: u8) -> u64 {
     // 0x0FFFFFFFFFFFFFFF_u64 >> (60 - (depth << 1))
     (1_u64 << (depth << 1)) - 1_u64
 }
@@ -291,9 +291,9 @@ impl Layer {
     ///
     /// # Example
     /// ```rust
-    /// use std::f64::consts::{PI};
-    /// use healpix::compass_point::{Cardinal};
-    /// use healpix::nested::{get, Layer};
+    /// use std::f64::consts::PI;
+    /// use healpix::dir::Cardinal;
+    /// use healpix::get;
     ///
     /// fn dist(p1: (f64, f64), p2: (f64, f64)) -> f64 {
     ///   let sindlon = f64::sin(0.5 * (p2.0 - p1.0));
@@ -330,9 +330,9 @@ impl Layer {
     ///
     /// # Example
     /// ```rust
-    /// use std::f64::consts::{PI};
-    /// use healpix::compass_point::{Cardinal};
-    /// use healpix::nested::{get, Layer};
+    /// use std::f64::consts::PI;
+    /// use healpix::dir::Cardinal;
+    /// use healpix::get;
     ///
     /// fn dist(p1: (f64, f64), p2: (f64, f64)) -> f64 {
     ///   let sindlon = f64::sin(0.5 * (p2.0 - p1.0));
@@ -398,9 +398,9 @@ impl Layer {
     ///
     /// # Example
     /// ```rust
-    /// use std::f64::consts::{PI};
-    /// use healpix::compass_point::{Cardinal, CardinalSet};
-    /// use healpix::nested::{get, Layer};
+    /// use std::f64::consts::PI;
+    /// use healpix::dir::{Cardinal, set::CardinalSet};
+    /// use healpix::get;
     ///
     /// fn dist(p1: (f64, f64), p2: (f64, f64)) -> f64 {
     ///   let sindlon = f64::sin(0.5 * (p2.0 - p1.0));

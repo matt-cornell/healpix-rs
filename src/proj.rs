@@ -63,8 +63,10 @@ pub(crate) static SMALLER_EDGE2OPEDGE_DIST: [f64; 30] = [
 /// > => lat = arccos(sqrt(2/3 * 4/pi)) ~= 22.88 deg ~= 0.39934 rad
 ///
 /// ```rust
-/// use cdshealpix::{TRANSITION_Z, FOUR_OVER_PI, LAT_OF_SQUARE_CELL};
-/// assert!(f64::abs(f64::acos(f64::sqrt(TRANSITION_Z * FOUR_OVER_PI)) - LAT_OF_SQUARE_CELL) < 1e-15_f64);
+/// use healpix::TRANSITION_Z;
+/// use healpix::proj::LAT_OF_SQUARE_CELL;
+/// use std::f64::consts::FRAC_PI_4;
+/// assert!(f64::abs(f64::acos(f64::sqrt(TRANSITION_Z / FRAC_PI_4)) - LAT_OF_SQUARE_CELL) < 1e-15_f64);
 /// ```
 pub const LAT_OF_SQUARE_CELL: f64 = 0.399_340_199_478_977_75_f64;
 
@@ -72,7 +74,7 @@ pub const LAT_OF_SQUARE_CELL: f64 = 0.399_340_199_478_977_75_f64;
 /// for the given argument `d_max_rad`. So if `d_max_rad < ~48 deg`. `d_max_rad` is given in radians.
 ///
 /// ```rust
-/// use cdshealpix::{has_best_starting_depth};
+/// use healpix::proj::has_best_starting_depth;
 /// use std::f64::consts::PI;
 ///
 /// assert!(!has_best_starting_depth(PI / 3f64));
@@ -109,7 +111,7 @@ pub fn has_best_starting_depth(d_max_rad: f64) -> bool {
 /// # Examples
 ///
 /// ```rust
-/// use cdshealpix::{best_starting_depth};
+/// use healpix::proj::best_starting_depth;
 /// use std::f64::consts::PI;
 ///
 /// assert_eq!(0, best_starting_depth(PI / 4f64)); // 45 deg
@@ -289,7 +291,7 @@ pub fn best_starting_depth(d_max_rad: f64) -> u8 {
 /// # Examples
 /// To obtain the WCS projection (see Calabretta2007), you can write:
 /// ```rust
-/// use cdshealpix::proj;
+/// use healpix::proj::proj;
 /// use std::f64::consts::{PI, FRAC_PI_2, FRAC_PI_4};
 ///
 /// let lon = 25.1f64;
@@ -308,7 +310,7 @@ pub fn best_starting_depth(d_max_rad: f64) -> u8 {
 ///
 /// Other test example:
 /// ```rust
-/// use cdshealpix::{TRANSITION_LATITUDE, proj};
+/// use healpix::{TRANSITION_LATITUDE, proj::proj};
 /// use std::f64::consts::{FRAC_PI_2, FRAC_PI_4};
 ///
 /// let (x, y) = proj(0.0, 0.0);
@@ -393,7 +395,7 @@ pub fn proj(lon: f64, lat: f64) -> (f64, f64) {
 /// # Example
 /// Simple example based on the center of each base cell.
 /// ```rust
-/// use cdshealpix::base_cell_from_proj_coo;
+/// use healpix::proj::base_cell_from_proj_coo;
 ///
 /// assert_eq!(base_cell_from_proj_coo(1.0,  1.0),  0);
 /// assert_eq!(base_cell_from_proj_coo(3.0,  1.0),  1);
@@ -454,13 +456,13 @@ pub fn base_cell_from_proj_coo(x: f64, y: f64) -> u8 {
 /// # Examples
 /// To obtain the WCS un-projection (see Calabretta2007), you can write:
 /// ```rust
-/// use cdshealpix::{FOUR_OVER_PI, unproj};
+/// use healpix::proj::unproj;
 /// use std::f64::consts::{PI, FRAC_PI_2, FRAC_PI_4};
 ///
 /// let x = 2.1f64;
 /// let y = 0.36f64;
 ///
-/// let (mut lon, mut lat) = unproj(x * FOUR_OVER_PI, y * FOUR_OVER_PI);
+/// let (mut lon, mut lat) = unproj(x / FRAC_PI_4, y / FRAC_PI_4);
 /// if lon < 0f64 {
 ///     lon += 2f64 * PI;
 /// }
@@ -471,7 +473,8 @@ pub fn base_cell_from_proj_coo(x: f64, y: f64) -> u8 {
 ///
 /// Other test example:
 /// ```rust
-/// use cdshealpix::{TRANSITION_LATITUDE, proj, unproj};
+/// use healpix::{TRANSITION_LATITUDE};
+/// use healpix::proj::{proj, unproj};
 /// use std::f64::consts::{FRAC_PI_2, FRAC_PI_4};
 ///
 /// fn dist(p1: (f64, f64), p2: (f64, f64)) -> f64 {

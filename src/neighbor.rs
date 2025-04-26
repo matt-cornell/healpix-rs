@@ -64,8 +64,8 @@ impl super::Layer {
     ///
     /// # Example
     /// ```rust
-    /// use healpix::compass_point::{Direction};
-    /// use healpix::nested::{get, Layer};
+    /// use healpix::dir::Direction;
+    /// use healpix::get;
     ///
     /// let depth = 0u8;
     /// let nested0 = get(depth);
@@ -94,8 +94,8 @@ impl super::Layer {
     ///
     /// # Example
     /// ```rust
-    /// use healpix::compass_point::{Direction};
-    /// use healpix::nested::{get, Layer};
+    /// use healpix::dir::Direction;
+    /// use healpix::get;
     ///
     /// let depth = 0u8;
     /// let nested0 = get(depth);
@@ -1059,16 +1059,16 @@ fn append_sorted_internal_edge_element(
 ///
 ///
 /// let delta_depth = 1;
-/// assert_eq!(vec![0, 1].into_boxed_slice() , internal_edge_part(0, delta_depth, Ordinal::SE));
-/// assert_eq!(vec![0, 2].into_boxed_slice() , internal_edge_part(0, delta_depth, Ordinal::SW));
-/// assert_eq!(vec![1, 3].into_boxed_slice() , internal_edge_part(0, delta_depth, Ordinal::NE));
-/// assert_eq!(vec![2, 3].into_boxed_slice() , internal_edge_part(0, delta_depth, Ordinal::NW));
+/// assert_eq!(internal_edge_part(0, delta_depth, Ordinal::SE), vec![0, 1]);
+/// assert_eq!(internal_edge_part(0, delta_depth, Ordinal::SW), vec![0, 2]);
+/// assert_eq!(internal_edge_part(0, delta_depth, Ordinal::NE), vec![1, 3]);
+/// assert_eq!(internal_edge_part(0, delta_depth, Ordinal::NW), vec![2, 3]);
 ///
 /// let delta_depth = 2;
-/// assert_eq!(vec![ 0,  1,  4,  5].into_boxed_slice() , internal_edge_part(0, delta_depth, Ordinal::SE));
-/// assert_eq!(vec![ 0,  2,  8, 10].into_boxed_slice() , internal_edge_part(0, delta_depth, Ordinal::SW));
-/// assert_eq!(vec![ 5,  7, 13, 15].into_boxed_slice() , internal_edge_part(0, delta_depth, Ordinal::NE));
-/// assert_eq!(vec![10, 11, 14, 15].into_boxed_slice() , internal_edge_part(0, delta_depth, Ordinal::NW));
+/// assert_eq!(internal_edge_part(0, delta_depth, Ordinal::SE), vec![ 0,  1,  4,  5]);
+/// assert_eq!(internal_edge_part(0, delta_depth, Ordinal::SW), vec![ 0,  2,  8, 10]);
+/// assert_eq!(internal_edge_part(0, delta_depth, Ordinal::NE), vec![ 5,  7, 13, 15]);
+/// assert_eq!(internal_edge_part(0, delta_depth, Ordinal::NW), vec![10, 11, 14, 15]);
 /// ```
 pub fn internal_edge_part(hash: u64, delta_depth: u8, direction: Ordinal) -> Vec<u64> {
     let mut dest = Vec::new();
@@ -1125,8 +1125,8 @@ pub fn append_internal_edge_part(
 /// Returns the hash value of the cell of depth this layer depth + the given `delta_depth`
 /// located in the corner of given direction in the given cell.
 /// ```rust
-/// use cdshealpix::compass_point::{Cardinal};
-/// use cdshealpix::nested::{internal_corner};
+/// use healpix::dir::Cardinal;
+/// use healpix::neighbor::internal_corner;
 ///
 /// let delta_depth = 1;
 /// assert_eq!(0 , internal_corner(0, delta_depth, Cardinal::S));

@@ -214,7 +214,7 @@ impl super::Layer {
     ///
     /// # Example
     /// ```rust
-    /// use healpix::nested::{get, Layer};
+    /// use healpix::get;
     ///
     /// let depth = 4_u8;
     /// let nested = get(depth);
@@ -225,10 +225,7 @@ impl super::Layer {
     ///
     /// let actual_res = nested.cone_coverage_centers(lon, lat, radius);
     /// let expected_res: [u64; 7] = [2058, 2059, 2080, 2081, 2082, 2083, 2088];
-    /// assert_eq!(actual_res.flat_iter().deep_size(), expected_res.len());
-    /// for (h1, h2) in actual_res.flat_iter().zip(expected_res.iter()) {
-    ///      assert_eq!(h1, *h2);
-    /// }
+    /// assert_eq!(actual_res.into_flat_iter().collect::<Vec<_>>(), expected_res);
     /// ```
     pub fn cone_coverage_centers(
         &self,
@@ -410,7 +407,7 @@ impl super::Layer {
     ///
     /// # Example
     /// ```rust
-    /// use healpix::nested::{get, Layer};
+    /// use healpix::get;
     ///
     /// let depth = 4_u8;
     /// let nested3 = get(depth);
@@ -421,10 +418,7 @@ impl super::Layer {
     ///
     /// let actual_res = nested3.cone_coverage_fullin(lon, lat, radius);
     /// let expected_res: [u64; 2] = [2081, 2082];
-    /// assert_eq!(actual_res.flat_iter().deep_size(), expected_res.len());
-    /// for (h1, h2) in actual_res.flat_iter().zip(expected_res.iter()) {
-    ///      assert_eq!(h1, *h2);
-    /// }
+    /// assert_eq!(actual_res.into_flat_iter().collect::<Vec<_>>(), expected_res);
     /// ```
     pub fn cone_coverage_fullin(
         &self,
@@ -632,7 +626,7 @@ impl super::Layer {
     ///
     /// # Example
     /// ```rust
-    /// use healpix::nested::{get, Layer};
+    /// use healpix::get;
     ///
     /// let depth = 4_u8;
     /// let nested = get(depth);
@@ -646,10 +640,7 @@ impl super::Layer {
     /// let expected_res: [u64; 40] = [2050, 2051, 2054, 2055, 2056, 2057, 2058, 2059, 2060, 2061,
     ///   2062, 2063, 2080, 2083, 2084, 2085, 2086, 2087, 2088, 2089, 2090, 2091, 2092, 2094, 2176,
     ///   2177, 2178, 2817, 2820, 2821, 2822, 2823, 2832, 2833, 2834, 2835, 2836, 2837, 2838, 2880];
-    /// assert_eq!(actual_res.flat_iter().deep_size(), expected_res.len());
-    /// for (h1, h2) in actual_res.flat_iter().zip(expected_res.iter()) {
-    ///      assert_eq!(h1, *h2);
-    /// }
+    /// assert_eq!(actual_res.into_flat_iter().collect::<Vec<_>>(), expected_res);
     /// ```
     pub fn ring_coverage_approx(
         &self,
@@ -940,7 +931,7 @@ impl super::Layer {
     ///
     /// # Example
     /// ```rust
-    /// use healpix::nested::{get, Layer};
+    /// use healpix::get;
     ///
     /// let depth = 3_u8;
     /// let nested3 = get(depth);
@@ -951,10 +942,7 @@ impl super::Layer {
     ///
     /// let actual_res = nested3.cone_coverage_approx(lon, lat, radius);
     /// let expected_res: [u64; 10] = [512, 514, 515, 520, 521, 522, 544, 705, 708, 709];
-    /// assert_eq!(actual_res.flat_iter().deep_size(), expected_res.len());
-    /// for (h1, h2) in actual_res.flat_iter().zip(expected_res.iter()) {
-    ///      assert_eq!(h1, *h2);
-    /// }
+    /// assert_eq!(actual_res.into_flat_iter().collect::<Vec<_>>(), expected_res);
     /// ```
     pub fn cone_coverage_approx(
         &self,
@@ -989,7 +977,7 @@ impl super::Layer {
     ///
     /// # Example
     /// ```rust
-    /// use healpix::nested::{get, Layer};
+    /// use healpix::get;
     ///
     /// let depth = 3_u8;
     /// let nested3 = get(depth);
@@ -1000,10 +988,7 @@ impl super::Layer {
     ///
     /// let actual_res = nested3.cone_coverage_approx_custom(2, lon, lat, radius);
     /// let expected_res: [u64; 8] = [514, 515, 520, 521, 522, 705, 708, 709];
-    /// assert_eq!(actual_res.flat_iter().deep_size(), expected_res.len());
-    /// for (h1, h2) in actual_res.flat_iter().zip(expected_res.iter()) {
-    ///     assert_eq!(h1, *h2);
-    /// }
+    /// assert_eq!(actual_res.into_flat_iter().collect::<Vec<_>>(), expected_res);
     /// ```
     pub fn cone_coverage_approx_custom(
         &self,
@@ -1375,18 +1360,14 @@ impl super::Layer {
     ///
     /// # Example
     /// ```rust
-    /// use healpix::compass_point::{Direction};
-    /// use healpix::nested::{get, Layer};
+    /// use healpix::get;
     ///
     /// let depth = 3_u8;
     /// let nested3 = get(depth);
     ///
     /// let actual_res = nested3.polygon_coverage(&[(0.0, 0.0), (0.0, 0.5), (0.25, 0.25)], false);
     /// let expected_res: [u64; 8] = [304, 305, 306, 307, 308, 310, 313, 316];
-    /// assert_eq!(actual_res.flat_iter().deep_size(), expected_res.len());
-    /// for (h1, h2) in actual_res.flat_iter().zip(expected_res.iter()) {
-    ///     assert_eq!(h1, *h2);
-    /// }
+    /// assert_eq!(actual_res.into_flat_iter().collect::<Vec<_>>(), expected_res);
     /// ```
     pub fn polygon_coverage(&self, vertices: &[(f64, f64)], exact_solution: bool) -> MutableBmoc {
         self.custom_polygon_coverage(vertices, &ContainsSouthPoleMethod::Default, exact_solution)

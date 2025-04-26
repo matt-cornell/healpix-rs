@@ -17,6 +17,12 @@ impl<K, const N: usize> EnumSet<K, N> {
             _marker: PhantomData,
         }
     }
+    pub const fn all() -> Self {
+        Self {
+            values: [true; N],
+            _marker: PhantomData,
+        }
+    }
 }
 impl<K: Enum, const N: usize> EnumSet<K, N> {
     pub fn iter(&self) -> SetIter<K, N> {

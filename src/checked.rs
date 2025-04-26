@@ -27,7 +27,7 @@ pub const fn nside_square(depth: u8) -> u32 {
 /// # Examples
 ///
 /// ```rust
-/// use cdshealpix::{n_hash};
+/// use healpix::checked::n_hash;
 ///
 /// assert_eq!(12u64, n_hash(0u8));
 /// assert_eq!(48u64, n_hash(1u8));
@@ -86,7 +86,7 @@ pub const fn n_hash(depth: u8) -> u64 {
 /// # Example
 ///
 /// ```rust
-/// use cdshealpix::nested::{get, Layer};
+/// use healpix::get;
 /// let l0 = get(0);
 /// assert_eq!(l0.to_uniq(0), 16);
 /// ```

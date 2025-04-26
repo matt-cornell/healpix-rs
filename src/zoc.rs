@@ -1,4 +1,4 @@
-//! *Directly Taken from CDSHealpix's `nested::zordercurve`.*
+//! *Directly Taken from healpix's `nested::zordercurve`.*
 //!
 //! 2D Morton code implementation.
 //! For BMI 2.0 references, see:

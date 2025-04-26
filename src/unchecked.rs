@@ -35,7 +35,7 @@ pub const fn n_hash(depth: u8) -> u64 {
 /// # Example
 ///
 /// ```rust
-/// use cdshealpix::nested::{get, Layer};
+/// use healpix::get;
 /// let l0 = get(0);
 /// assert_eq!(l0.to_uniq(0), 16);
 /// ```

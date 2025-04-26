@@ -1,7 +1,7 @@
+use crate::sph_geom::coo3d::*;
+use crate::{LonLat, LonLatT};
+use crate::{ONE_OVER_TRANSITION_Z, TRANSITION_Z};
 use std::f64::consts::{FRAC_PI_2, FRAC_PI_4, FRAC_PI_8, PI};
-
-use super::sph_geom::coo3d::*;
-use super::{ONE_OVER_TRANSITION_Z, TRANSITION_Z};
 // use super::sph_geom::{Polygon};
 
 /// Returns the coordinates (lon, lat) of the "special points" the given great-circle arc contains
@@ -473,9 +473,9 @@ fn arc_special_point_in_pc_same_quarter(
     if p2_mod_half_pi == 0.0 {
         p2_mod_half_pi = FRAC_PI_2;
     }
-    let v1 = Coo3D::from_sph_coo(p1.lon() % FRAC_PI_2, p1.lat());
-    let v2 = Coo3D::from_sph_coo(p2_mod_half_pi, p2.lat());
-    let mut cone_center = cross_product(&v1, &v2).normalized();
+    let v1 = Coo3D::from_sph_coo([p1.lon() % FRAC_PI_2, p1.lat()].as_lonlat());
+    let v2 = Coo3D::from_sph_coo([p2_mod_half_pi, p2.lat()].as_lonlat());
+    let mut cone_center = cross_product(v1, v2).normalized();
     let lonlat = cone_center.lonlat();
     if lonlat.lon() > PI {
         cone_center = cone_center.opposite();

@@ -1,5 +1,8 @@
 use std::f64::consts::{FRAC_PI_2, TAU};
 
+use crate::LonLat;
+use crate::coords::LonLatT;
+
 // see https://www.nalgebra.org/
 
 // Euclidean coordinates
@@ -358,37 +361,6 @@ impl Vec3 for UnitVect3 {
 
 impl UnitVec3 for UnitVect3 {}
 
-// Geographic coordinates
-
-pub trait LonLatT {
-    fn lon(&self) -> f64;
-    fn lat(&self) -> f64;
-    fn vec3(&self) -> UnitVect3 {
-        vec3_of(self.lon(), self.lat())
-    }
-}
-
-// Apply to all references to a type that implements the Vec3 trait
-impl<T> LonLatT for &T
-where
-    T: LonLatT,
-{
-    #[inline]
-    fn lon(&self) -> f64 {
-        LonLatT::lon(*self)
-    }
-
-    #[inline]
-    fn lat(&self) -> f64 {
-        LonLatT::lat(*self)
-    }
-
-    #[inline]
-    fn vec3(&self) -> UnitVect3 {
-        LonLatT::vec3(*self)
-    }
-}
-
 // pub const fn vec3_of(lon: f64, lat: f64) -> UnitVect3 {
 pub fn vec3_of(lon: f64, lat: f64) -> UnitVect3 {
     let (sin_lon, cos_lon) = lon.sin_cos();
@@ -400,26 +372,9 @@ pub fn vec3_of(lon: f64, lat: f64) -> UnitVect3 {
     }
 }
 
-#[derive(Debug)]
-pub struct LonLat {
-    pub lon: f64,
-    pub lat: f64,
-}
-
-impl LonLatT for LonLat {
-    #[inline]
-    fn lon(&self) -> f64 {
-        self.lon
-    }
-    #[inline]
-    fn lat(&self) -> f64 {
-        self.lat
-    }
-}
-
 // Specific Coo3D
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct Coo3D {
     x: f64,
     y: f64,
@@ -443,7 +398,8 @@ impl Coo3D {
     }
 
     /// lon and lat in radians
-    pub fn from_sph_coo(lon: f64, lat: f64) -> Coo3D {
+    pub fn from_sph_coo(coords: LonLat) -> Coo3D {
+        let [lon, lat] = coords.as_f64s();
         let v = vec3_of(lon, lat);
         if !(0.0..TAU).contains(&lon) || !(-FRAC_PI_2..=FRAC_PI_2).contains(&lat) {
             let (new_lon, new_lat) = lonlat_of(v.x(), v.y(), v.z());

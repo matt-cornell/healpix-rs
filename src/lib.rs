@@ -19,6 +19,7 @@ use std::f64::consts::{FRAC_PI_2, FRAC_PI_4};
 const SQRT_6: f64 = 2.449489743;
 
 pub use coords::LonLat;
+use coords::LonLatT;
 use zoc::{ZOC, ZOrderCurve};
 
 use dir::map::CardinalMap;
@@ -293,21 +294,16 @@ impl Layer {
     /// ```rust
     /// use std::f64::consts::PI;
     /// use healpix::dir::Cardinal;
+    /// use healpix::geo::distance;
     /// use healpix::get;
-    ///
-    /// fn dist(p1: (f64, f64), p2: (f64, f64)) -> f64 {
-    ///   let sindlon = f64::sin(0.5 * (p2.0 - p1.0));
-    ///   let sindlat = f64::sin(0.5 * (p2.1 - p1.1));
-    ///   2f64 * f64::asin(f64::sqrt(sindlat * sindlat + p1.1.cos() * p2.1.cos() * sindlon * sindlon))
-    /// }
     ///
     /// let depth = 0u8;
     /// let nested0 = get(depth);
     ///
-    /// assert!(dist((PI / 4f64, 0.0) , nested0.vertex(0, Cardinal::S)) < 1e-15);
+    /// assert!(distance((PI / 4f64, 0.0), nested0.vertex(0, Cardinal::S)) < 1e-15);
     /// ```
     #[inline]
-    pub fn vertex(&self, hash: u64, vertex_direction: Cardinal) -> (f64, f64) {
+    pub fn vertex(&self, hash: u64, vertex_direction: Cardinal) -> LonLat {
         let (x, y) = self.center_of_projected_cell(hash);
         self.vertex_lonlat(x, y, vertex_direction)
     }
@@ -332,21 +328,16 @@ impl Layer {
     /// ```rust
     /// use std::f64::consts::PI;
     /// use healpix::dir::Cardinal;
+    /// use healpix::geo::distance;
     /// use healpix::get;
-    ///
-    /// fn dist(p1: (f64, f64), p2: (f64, f64)) -> f64 {
-    ///   let sindlon = f64::sin(0.5 * (p2.0 - p1.0));
-    ///   let sindlat = f64::sin(0.5 * (p2.1 - p1.1));
-    ///   2f64 * f64::asin(f64::sqrt(sindlat * sindlat + p1.1.cos() * p2.1.cos() * sindlon * sindlon))
-    /// }
     ///
     /// let depth = 0u8;
     /// let nested0 = get(depth);
     ///
-    /// assert!(dist((PI / 4f64, 0.0) , nested0.vertices(0)[0]) < 1e-15);
+    /// assert!(distance((PI / 4f64, 0.0), nested0.vertices(0)[0]) < 1e-15);
     /// ```
     #[inline]
-    pub fn vertices(&self, hash: u64) -> [(f64, f64); 4] {
+    pub fn vertices(&self, hash: u64) -> [LonLat; 4] {
         let (x, y) = self.center_of_projected_cell(hash);
         let t = self.one_over_nside;
         [
@@ -400,21 +391,16 @@ impl Layer {
     /// ```rust
     /// use std::f64::consts::PI;
     /// use healpix::dir::{Cardinal, set::CardinalSet};
+    /// use healpix::geo::distance;
     /// use healpix::get;
-    ///
-    /// fn dist(p1: (f64, f64), p2: (f64, f64)) -> f64 {
-    ///   let sindlon = f64::sin(0.5 * (p2.0 - p1.0));
-    ///   let sindlat = f64::sin(0.5 * (p2.1 - p1.1));
-    ///   2f64 * f64::asin(f64::sqrt(sindlat * sindlat + p1.1.cos() * p2.1.cos() * sindlon * sindlon))
-    /// }
     ///
     /// let depth = 0u8;
     /// let nested0 = get(depth);
     ///
-    /// assert!(dist((PI / 4f64, 0.0) , *nested0.vertices_map(0, CardinalSet::all()).get(Cardinal::S).unwrap()) < 1e-15);
+    /// assert!(distance((PI / 4f64, 0.0), *nested0.vertices_map(0, CardinalSet::all()).get(Cardinal::S).unwrap()) < 1e-15);
     /// ```
     #[inline]
-    pub fn vertices_map(&self, hash: u64, directions: CardinalSet) -> CardinalMap<(f64, f64)> {
+    pub fn vertices_map(&self, hash: u64, directions: CardinalSet) -> CardinalMap<LonLat> {
         let (x, y) = self.center_of_projected_cell(hash);
         let mut result_map = CardinalMap::new();
         for direction in directions {
@@ -445,13 +431,13 @@ impl Layer {
         to_vertex: Cardinal,
         include_to_vertex: bool,
         n_segments: u32,
-    ) -> Box<[(f64, f64)]> {
+    ) -> Box<[LonLat]> {
         let n_points: usize = if include_to_vertex {
             n_segments + 1
         } else {
             n_segments
         } as usize;
-        let mut path_points: Vec<(f64, f64)> = Vec::with_capacity(n_points);
+        let mut path_points = Vec::with_capacity(n_points);
         let proj_center = self.center_of_projected_cell(hash);
         self.path_along_cell_side_internal(
             proj_center,
@@ -471,7 +457,7 @@ impl Layer {
         to_vertex: Cardinal,
         include_to_vertex: bool,
         n_segments: u32,
-        path_points: &mut Vec<(f64, f64)>,
+        path_points: &mut Vec<LonLat>,
     ) {
         let n_points: usize = if include_to_vertex {
             n_segments + 1
@@ -510,10 +496,9 @@ impl Layer {
         starting_vertex: Cardinal,
         clockwise_direction: bool,
         n_segments_by_side: u32,
-    ) -> Box<[(f64, f64)]> {
+    ) -> Box<[LonLat]> {
         // Prepare space for the result
-        let mut path_points: Vec<(f64, f64)> =
-            Vec::with_capacity((n_segments_by_side << 2) as usize);
+        let mut path_points = Vec::with_capacity((n_segments_by_side << 2) as usize);
         // Compute center
         let proj_center = self.center_of_projected_cell(hash);
         // Unrolled loop over successive sides
@@ -576,10 +561,10 @@ impl Layer {
     ///
     /// # Motivation
     /// - to create a mesh in Unity
-    pub fn grid(&self, hash: u64, n_segments_by_side: u16) -> Box<[(f64, f64)]> {
+    pub fn grid(&self, hash: u64, n_segments_by_side: u16) -> Box<[LonLat]> {
         let n_points_per_side = (n_segments_by_side as usize) + 1;
         // Prepare space for the result
-        let mut grid: Vec<(f64, f64)> = Vec::with_capacity(n_points_per_side * n_points_per_side);
+        let mut grid = Vec::with_capacity(n_points_per_side * n_points_per_side);
         // Compute center
         let proj_center = self.center_of_projected_cell(hash);
         // Compute grid
@@ -624,12 +609,7 @@ impl Layer {
     // Computes the position on the unit sphere of the vertex, located at the given direction,
     // of the cell of given center coordinate on the projection plane.
     #[inline]
-    fn vertex_lonlat(
-        &self,
-        center_x: f64,
-        center_y: f64,
-        vertex_direction: Cardinal,
-    ) -> (f64, f64) {
+    fn vertex_lonlat(&self, center_x: f64, center_y: f64, vertex_direction: Cardinal) -> LonLat {
         let x = center_x + vertex_direction.x() * self.one_over_nside;
         let y = center_y + vertex_direction.y() * self.one_over_nside;
         proj::unproj(x.rem_euclid(8.0), y)
@@ -705,8 +685,11 @@ impl Layer {
     ///   together with their weight
     /// # Panics
     ///   If `lat` **not in** `[-pi/2, pi/2]`, this method panics.
-    pub fn bilinear_interpolation(&self, lon: f64, lat: f64) -> [(u64, f64); 4] {
-        let (h, dx, dy) = self.hash_with_dxdy(lon, lat);
+    pub fn bilinear_interpolation(&self, coords: impl LonLatT) -> [(u64, f64); 4] {
+        self.bilinear_interpolation_impl(coords.lon(), coords.lat())
+    }
+    fn bilinear_interpolation_impl(&self, lon: f64, lat: f64) -> [(u64, f64); 4] {
+        let (h, dx, dy) = self.hash_with_dxdy([lon, lat]);
         // We can probably optimize here since we are interested in only 3 neighbors
         let neigbours_map = self.neighbors(h);
         // Look at the four pixels

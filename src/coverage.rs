@@ -1,4 +1,5 @@
 use crate::bmoc::MutableBmoc;
+use crate::coords::LonLatT;
 use crate::proj::{LAT_OF_SQUARE_CELL, best_starting_depth, has_best_starting_depth};
 use crate::special_points_finder::arc_special_points;
 use crate::sph_geom::cone::Cone;
@@ -6,7 +7,7 @@ use crate::sph_geom::coo3d::*;
 use crate::sph_geom::frame::RefToLocalRotMatrix;
 use crate::sph_geom::zone::Zone;
 use crate::sph_geom::{ContainsSouthPoleMethod, Polygon};
-use crate::{TRANSITION_LATITUDE, TRANSITION_Z, unchecked};
+use crate::{LonLat, TRANSITION_LATITUDE, TRANSITION_Z, unchecked};
 use arrayvec::ArrayVec;
 use std::f64::consts::{FRAC_PI_2, FRAC_PI_4, PI, TAU};
 use std::iter::once;
@@ -55,7 +56,7 @@ impl super::Layer {
                 {
                     let d = best_starting_depth(mec.radius()).min(self.depth);
                     let layer = Self::get(d);
-                    let h = layer.hash(center.lon(), center.lat());
+                    let h = layer.hash(center);
                     let mut vals = layer
                         .neighbors(h)
                         .into_values()
@@ -87,29 +88,26 @@ impl super::Layer {
         // ignore at the deepest level).
         let mut zone_vertices_hashes_flags = Vec::with_capacity(4);
         if zone_vertices[0].1 > -FRAC_PI_2 {
-            let vertex_hash_sw = self.hash(zone_vertices[0].0, zone_vertices[0].1);
+            let vertex_hash_sw = self.hash(zone_vertices[0]);
             zone_vertices_hashes_flags.push((vertex_hash_sw, true));
         }
         // Others are not included in the zone
         if zone_vertices[1].1 < FRAC_PI_2 {
-            let (vertex_hash_nw, dx, dy) =
-                self.hash_with_dxdy(zone_vertices[1].0, zone_vertices[1].1);
+            let (vertex_hash_nw, dx, dy) = self.hash_with_dxdy(zone_vertices[1]);
             zone_vertices_hashes_flags.push((
                 vertex_hash_nw,
                 dx > 1e-15 && dy > 1e-15 && dx < 1.0 && dy < 1.0,
             ));
         }
         if zone_vertices[2].1 < FRAC_PI_2 {
-            let (vertex_hash_ne, dx, dy) =
-                self.hash_with_dxdy(zone_vertices[2].0, zone_vertices[2].1);
+            let (vertex_hash_ne, dx, dy) = self.hash_with_dxdy(zone_vertices[2]);
             zone_vertices_hashes_flags.push((
                 vertex_hash_ne,
                 dx > 1e-15 && dy > 1e-15 && dx < 1.0 && dy < 1.0,
             ));
         }
         if zone_vertices[3].1 > -FRAC_PI_2 {
-            let (vertex_hash_se, dx, dy) =
-                self.hash_with_dxdy(zone_vertices[3].0, zone_vertices[3].1);
+            let (vertex_hash_se, dx, dy) = self.hash_with_dxdy(zone_vertices[3]);
             zone_vertices_hashes_flags.push((
                 vertex_hash_se,
                 dx > 1e-15 && dy > 1e-15 && dx < 1.0 && dy < 1.0,
@@ -155,7 +153,8 @@ impl super::Layer {
             }
             false
         };
-        let [(l_s, b_s), (l_e, b_e), (l_n, b_n), (l_w, b_w)] = Self::get(depth).vertices(hash);
+        let [[l_s, b_s], [l_e, b_e], [l_n, b_n], [l_w, b_w]] =
+            Self::get(depth).vertices(hash).map(LonLat::as_f64s);
         let n_in = zone.contains(l_s, b_s) as u8
             + zone.contains_exclusive(l_e, b_e) as u8
             + zone.contains_exclusive(l_n, b_n) as u8
@@ -222,11 +221,14 @@ impl super::Layer {
     /// let lat = -72.80028_f64.to_radians();
     /// let radius = 5.64323_f64.to_radians();
     ///
-    /// let actual_res = nested.cone_coverage_centers(lon, lat, radius);
+    /// let actual_res = nested.cone_coverage_centers([lon, lat], radius);
     /// let expected_res: [u64; 7] = [2058, 2059, 2080, 2081, 2082, 2083, 2088];
     /// assert_eq!(actual_res.into_flat_iter().collect::<Vec<_>>(), expected_res);
     /// ```
-    pub fn cone_coverage_centers(
+    pub fn cone_coverage_centers(&self, center: impl LonLatT, radius: f64) -> MutableBmoc {
+        self.cone_coverage_centers_impl(center.lon(), center.lat(), radius)
+    }
+    fn cone_coverage_centers_impl(
         &self,
         cone_lon: f64,
         cone_lat: f64,
@@ -269,12 +271,12 @@ impl super::Layer {
         // Normal case
         let depth_start = best_starting_depth(cone_radius);
         if depth_start >= self.depth {
-            let center = self.hash(cone_lon, cone_lat);
+            let center = self.hash([cone_lon, cone_lat]);
             let mut neigs = self
                 .neighbors(center)
                 .into_values()
                 .filter(|&neigh| {
-                    let (lon, lat) = self.center(neigh);
+                    let [lon, lat] = self.center(neigh).as_f64s();
                     squared_half_segment(lon - cone_lon, lat - cone_lat, lon.cos(), cos_cone_lat)
                         <= shs_cone_radius
                 })
@@ -296,7 +298,7 @@ impl super::Layer {
             );
             let minmax_array: Box<[MinMax]> = to_shs_min_max_array(cone_radius, &distances);
             let root_layer = Self::get(depth_start);
-            let root_center_hash = root_layer.hash(cone_lon, cone_lat);
+            let root_center_hash = root_layer.hash([cone_lon, cone_lat]);
             let mut neigs: ArrayVec<u64, 9> = root_layer
                 .neighbors(root_center_hash)
                 .into_values()
@@ -334,7 +336,7 @@ impl super::Layer {
         recur_depth: u8,  // conveniency delta depth index
         bmoc_builder: &mut MutableBmoc<false>, // builder in which cells are appended (flag always set to true!)
     ) where
-        F: Fn((f64, f64)) -> f64,
+        F: Fn(LonLat) -> f64,
     {
         let center = Self::get(depth).center(hash);
         let shs = shs_computer(center);
@@ -407,19 +409,23 @@ impl super::Layer {
     /// # Example
     /// ```rust
     /// use healpix::get;
+    /// use healpix::coords::Degrees;
     ///
     /// let depth = 4_u8;
     /// let nested3 = get(depth);
     ///
-    /// let lon = 13.158329_f64.to_radians();
-    /// let lat = -72.80028_f64.to_radians();
+    /// let lon = 13.158329_f64;
+    /// let lat = -72.80028_f64;
     /// let radius = 5.64323_f64.to_radians();
     ///
-    /// let actual_res = nested3.cone_coverage_fullin(lon, lat, radius);
+    /// let actual_res = nested3.cone_coverage_fullin(Degrees(lon, lat), radius);
     /// let expected_res: [u64; 2] = [2081, 2082];
     /// assert_eq!(actual_res.into_flat_iter().collect::<Vec<_>>(), expected_res);
     /// ```
-    pub fn cone_coverage_fullin(
+    pub fn cone_coverage_fullin(&self, center: impl LonLatT, radius: f64) -> MutableBmoc {
+        self.cone_coverage_fullin_impl(center.lon(), center.lat(), radius)
+    }
+    pub fn cone_coverage_fullin_impl(
         &self,
         cone_lon: f64,
         cone_lat: f64,
@@ -462,13 +468,13 @@ impl super::Layer {
         // Normal case
         let depth_start = best_starting_depth(cone_radius);
         if depth_start >= self.depth {
-            let center = self.hash(cone_lon, cone_lat);
+            let center = self.hash([cone_lon, cone_lat]);
             let mut neigs: ArrayVec<u64, 9> = self
                 .neighbors(center)
                 .into_values()
                 .filter(|neigh| {
                     let mut fully_in = true;
-                    for (lon, lat) in self.vertices(*neigh) {
+                    for LonLat { lon, lat } in self.vertices(*neigh) {
                         fully_in &= squared_half_segment(
                             lon - cone_lon,
                             lat - cone_lat,
@@ -495,7 +501,7 @@ impl super::Layer {
             );
             let minmax_array: Box<[MinMax]> = to_shs_min_max_array(cone_radius, &distances);
             let root_layer = Self::get(depth_start);
-            let root_center_hash = root_layer.hash(cone_lon, cone_lat);
+            let root_center_hash = root_layer.hash([cone_lon, cone_lat]);
             let mut neigs: ArrayVec<u64, 9> = root_layer
                 .neighbors(root_center_hash)
                 .into_values()
@@ -533,7 +539,7 @@ impl super::Layer {
         recur_depth: u8,  // conveniency delta depth index
         bmoc_builder: &mut MutableBmoc<false>, // builder in which cells are appended (flag always set to true!)
     ) where
-        F: Fn((f64, f64)) -> f64,
+        F: Fn(LonLat) -> f64,
     {
         let center = Self::get(depth).center(hash);
         let shs = shs_computer(center);
@@ -626,16 +632,17 @@ impl super::Layer {
     /// # Example
     /// ```rust
     /// use healpix::get;
+    /// use healpix::coords::Degrees;
     ///
     /// let depth = 4_u8;
     /// let nested = get(depth);
     ///
-    /// let lon = 13.158329_f64.to_radians();
-    /// let lat = -72.80028_f64.to_radians();
+    /// let lon = 13.158329_f64;
+    /// let lat = -72.80028_f64;
     /// let radius_int = 5.64323_f64.to_radians();
     /// let radius_ext = 10.0_f64.to_radians();
     ///
-    /// let actual_res = nested.ring_coverage_approx(lon, lat, radius_int, radius_ext);
+    /// let actual_res = nested.ring_coverage_approx(Degrees(lon, lat), radius_int, radius_ext);
     /// let expected_res: [u64; 40] = [2050, 2051, 2054, 2055, 2056, 2057, 2058, 2059, 2060, 2061,
     ///   2062, 2063, 2080, 2083, 2084, 2085, 2086, 2087, 2088, 2089, 2090, 2091, 2092, 2094, 2176,
     ///   2177, 2178, 2817, 2820, 2821, 2822, 2823, 2832, 2833, 2834, 2835, 2836, 2837, 2838, 2880];
@@ -643,30 +650,28 @@ impl super::Layer {
     /// ```
     pub fn ring_coverage_approx(
         &self,
-        cone_lon: f64,
-        cone_lat: f64,
-        cone_radius_int: f64,
-        cone_radius_ext: f64,
+        center: impl LonLatT,
+        radius_int: f64,
+        radius_ext: f64,
     ) -> MutableBmoc {
-        self.ring_coverage_approx_internal(cone_lon, cone_lat, cone_radius_int, cone_radius_ext)
+        self.ring_coverage_approx_internal(center.lon(), center.lat(), radius_int, radius_ext)
             .into_packed()
     }
 
     pub fn ring_coverage_approx_custom(
         &self,
         delta_depth: u8,
-        cone_lon: f64,
-        cone_lat: f64,
-        cone_radius_int: f64,
-        cone_radius_ext: f64,
+        center: impl LonLatT,
+        radius_int: f64,
+        radius_ext: f64,
     ) -> MutableBmoc {
         if delta_depth == 0 {
-            self.ring_coverage_approx(cone_lon, cone_lat, cone_radius_int, cone_radius_ext)
+            self.ring_coverage_approx(center, radius_int, radius_ext)
         } else {
             // TODO: change the algo not to put all cell in the MOC before pruning it:
             // - make a second recur function returning the number of sub-cell overlapped by the cone
             Self::get(self.depth + delta_depth)
-                .ring_coverage_approx_internal(cone_lon, cone_lat, cone_radius_int, cone_radius_ext)
+                .ring_coverage_approx_internal(center.lon(), center.lat(), radius_int, radius_ext)
                 .into_packed()
                 .lower_depth(self.depth)
                 .take()
@@ -741,12 +746,12 @@ impl super::Layer {
                     ),
             );
             let root_layer = Self::get(depth_start);
-            let center_hash_at_depth_start = root_layer.hash(cone_lon, cone_lat);
+            let center_hash_at_depth_start = root_layer.hash([cone_lon, cone_lat]);
             let mut neigs: ArrayVec<u64, 8> = root_layer
                 .neighbors(center_hash_at_depth_start)
                 .values()
                 .filter(|neigh| {
-                    for (lon, lat) in self.vertices(**neigh) {
+                    for LonLat { lon, lat } in self.vertices(**neigh) {
                         if squared_half_segment(
                             lon - cone_lon,
                             lat - cone_lat,
@@ -790,7 +795,7 @@ impl super::Layer {
             let minmax_ext_array: Box<[MinMax]> =
                 to_shs_min_max_array(cone_radius_ext, &distances_ext);
             let root_layer = Self::get(depth_start);
-            let root_center_hash = root_layer.hash(cone_lon, cone_lat);
+            let root_center_hash = root_layer.hash([cone_lon, cone_lat]);
             let mut neigs: ArrayVec<u64, 9> = root_layer
                 .neighbors(root_center_hash)
                 .into_values()
@@ -830,7 +835,7 @@ impl super::Layer {
         recur_depth: u8,           // conveniency delta depth index
         bmoc_builder: &mut MutableBmoc<false>, // builder in which cells are appended (flag always set to true!)
     ) where
-        F: Fn((f64, f64)) -> f64,
+        F: Fn(LonLat) -> f64,
     {
         let center = Self::get(depth).center(hash);
         let shs = shs_computer(center);
@@ -1059,7 +1064,7 @@ impl super::Layer {
                     ),
             );
             let root_layer = Self::get(depth_start);
-            let center_hash_at_depth_start = root_layer.hash(cone_lon, cone_lat);
+            let center_hash_at_depth_start = root_layer.hash([cone_lon, cone_lat]);
             let mut neigs: Vec<u64> = root_layer
                 .neighbors(center_hash_at_depth_start)
                 .values()
@@ -1086,7 +1091,7 @@ impl super::Layer {
             );
             let minmax_array: Box<[MinMax]> = to_shs_min_max_array(cone_radius, &distances);
             let root_layer = Self::get(depth_start);
-            let root_center_hash = root_layer.hash(cone_lon, cone_lat);
+            let root_center_hash = root_layer.hash([cone_lon, cone_lat]);
             let mut neigs: ArrayVec<u64, 9> = root_layer
                 .neighbors(root_center_hash)
                 .into_values()
@@ -1120,7 +1125,7 @@ impl super::Layer {
         recur_depth: u8,  // conveniency delta depth index
         bmoc_builder: &mut MutableBmoc<false>, // builder in which cells are appended
     ) where
-        F: Fn((f64, f64)) -> f64,
+        F: Fn(LonLat) -> f64,
     {
         let center = Self::get(depth).center(hash);
         let shs = shs_computer(center);
@@ -1251,8 +1256,8 @@ impl super::Layer {
     /// - if `b` not in `]0, a]`
     /// - if `pa` not in `[0, pi[`
     ///
-    pub fn box_coverage(&self, lon: f64, lat: f64, a: f64, b: f64, pa: f64) -> MutableBmoc {
-        let center = Coo3D::from_sph_coo(lon, lat);
+    pub fn box_coverage(&self, center: impl LonLatT, a: f64, b: f64, pa: f64) -> MutableBmoc {
+        let center = Coo3D::from_sph_coo(center.as_lonlat());
         let vertices = Self::box2polygon(center.lon(), center.lat(), a, b, pa);
         self.custom_polygon_coverage(
             &vertices,
@@ -1401,8 +1406,8 @@ impl super::Layer {
             } else {
                 depth_start = best_starting_depth(bounding_cone.radius()).min(self.depth);
                 let root_layer = Self::get(depth_start);
-                let LonLat { lon, lat } = bounding_cone.center().lonlat();
-                let center_hash = root_layer.hash(lon, lat);
+                let center = bounding_cone.center().lonlat();
+                let center_hash = root_layer.hash(center);
                 let mut neigs: ArrayVec<u64, 9> =
                     root_layer.neighbors(center_hash).into_values().collect();
                 neigs.push(center_hash);
@@ -1531,10 +1536,10 @@ impl super::Layer {
         }
     }
 
-    fn hashes_vec<T: LonLatT>(&self, poly_vertices: &[T]) -> Vec<u64> {
+    fn hashes_vec<T: LonLatT + Copy>(&self, poly_vertices: &[T]) -> Vec<u64> {
         poly_vertices
             .iter()
-            .map(|coo| self.hash(coo.lon(), coo.lat()))
+            .map(|coo| self.hash(*coo))
             .collect::<Vec<u64>>()
     }
 
@@ -1890,8 +1895,10 @@ fn shs_lower_than(shs_max: f64) -> impl FnMut(&(u64, f64)) -> bool {
 
 /// The returned closure computes the [sic]
 #[inline]
-fn shs_computer(cone_lon: f64, cone_lat: f64, cos_cone_lat: f64) -> impl Fn((f64, f64)) -> f64 {
-    move |(lon, lat)| squared_half_segment(lon - cone_lon, lat - cone_lat, lat.cos(), cos_cone_lat)
+fn shs_computer(cone_lon: f64, cone_lat: f64, cos_cone_lat: f64) -> impl Fn(LonLat) -> f64 {
+    move |LonLat { lon, lat }| {
+        squared_half_segment(lon - cone_lon, lat - cone_lat, lat.cos(), cos_cone_lat)
+    }
 }
 
 /// - `h` stands for `hash`
@@ -1904,7 +1911,7 @@ fn h_to_h_and_shs(
     layer: &'static super::Layer,
 ) -> impl FnMut(&u64) -> (u64, f64) {
     move |&hash| {
-        let (lon, lat) = layer.center(hash);
+        let LonLat { lon, lat } = layer.center(hash);
         (
             hash,
             squared_half_segment(lon - cone_lon, lat - cone_lat, lat.cos(), cos_cone_lat),
@@ -1925,18 +1932,7 @@ fn is_in_list(depth: u8, hash: u64, depth_hashs: u8, sorted_hashs: &[u64]) -> bo
 }
 
 fn n_vertices_in_poly(depth: u8, hash: u64, poly: &Polygon) -> (u8, [Coo3D; 4]) {
-    let [
-        (l_south, b_south),
-        (l_east, b_east),
-        (l_north, b_north),
-        (l_west, b_west),
-    ] = super::get(depth).vertices(hash);
-    let vertices = [
-        Coo3D::from_sph_coo(l_south, b_south),
-        Coo3D::from_sph_coo(l_east, b_east),
-        Coo3D::from_sph_coo(l_north, b_north),
-        Coo3D::from_sph_coo(l_west, b_west),
-    ];
+    let vertices = super::get(depth).vertices(hash).map(Coo3D::from_sph_coo);
     let n_vertices_in_poly = (poly.contains(&vertices[0]) as u8)
         + (poly.contains(&vertices[1]) as u8)
         + (poly.contains(&vertices[2]) as u8)

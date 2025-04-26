@@ -1,3 +1,6 @@
+use crate::LonLat;
+use crate::coords::LonLatT;
+
 use super::{
     F64_BUT_SIGN_BIT_MASK, F64_SIGN_BIT_MASK, FRAC_PI_2, FRAC_PI_4, SQRT_6, TRANSITION_LATITUDE,
     TRANSITION_Z,
@@ -292,12 +295,13 @@ pub fn best_starting_depth(d_max_rad: f64) -> u8 {
 /// To obtain the WCS projection (see Calabretta2007), you can write:
 /// ```rust
 /// use healpix::proj::proj;
+/// use healpix::coords::Degrees;
 /// use std::f64::consts::{PI, FRAC_PI_2, FRAC_PI_4};
 ///
 /// let lon = 25.1f64;
 /// let lat = 46.7f64;
 ///
-/// let (mut x, mut y) = proj(lon.to_radians(), lat.to_radians());
+/// let [mut x, mut y] = proj(Degrees(lon, lat));
 /// if x > 4f64 {
 ///   x -= 8f64;
 /// }
@@ -311,66 +315,65 @@ pub fn best_starting_depth(d_max_rad: f64) -> u8 {
 /// Other test example:
 /// ```rust
 /// use healpix::{TRANSITION_LATITUDE, proj::proj};
+/// use healpix::coords::Degrees;
+/// use healpix::geo::distance;
 /// use std::f64::consts::{FRAC_PI_2, FRAC_PI_4};
 ///
-/// let (x, y) = proj(0.0, 0.0);
+/// let [x, y] = proj([0.0, 0.0]);
 /// assert_eq!(0f64, x);
 /// assert_eq!(0f64, y);
 ///
-/// assert_eq!((0.0, 1.0), proj(0.0 * FRAC_PI_2, TRANSITION_LATITUDE));
+/// assert_eq!([0.0, 1.0], proj([0.0 * FRAC_PI_2, TRANSITION_LATITUDE]));
 ///
-/// fn dist(p1: (f64, f64), p2: (f64, f64)) -> f64 {
-///     f64::sqrt((p2.0 - p1.0) * (p2.0 - p1.0) + (p2.1 - p1.1) * (p2.1 - p1.1))
-/// }
-/// assert!(dist((0.0, 0.0), proj(0.0 * FRAC_PI_2, 0.0)) < 1e-15);
-/// assert!(dist((0.0, 1.0), proj(0.0 * FRAC_PI_2, TRANSITION_LATITUDE)) < 1e-15);
-/// assert!(dist((1.0, 2.0), proj(0.0 * FRAC_PI_2 + FRAC_PI_4, FRAC_PI_2)) < 1e-15);
-/// assert!(dist((2.0, 1.0), proj(1.0 * FRAC_PI_2, TRANSITION_LATITUDE)) < 1e-15);
-/// assert!(dist((3.0, 2.0), proj(1.0 * FRAC_PI_2 + FRAC_PI_4, FRAC_PI_2)) < 1e-15);
-/// assert!(dist((4.0, 1.0), proj(2.0 * FRAC_PI_2 , TRANSITION_LATITUDE)) < 1e-15);
-/// assert!(dist((5.0, 2.0), proj(2.0 * FRAC_PI_2 + FRAC_PI_4, FRAC_PI_2)) < 1e-15);
-/// assert!(dist((6.0, 1.0), proj(3.0 * FRAC_PI_2, TRANSITION_LATITUDE)) < 1e-15);
-/// assert!(dist((7.0, 2.0), proj(3.0 * FRAC_PI_2 + FRAC_PI_4, FRAC_PI_2)) < 1e-15);
-/// assert!(dist((0.0, 1.0), proj(4.0 * FRAC_PI_2, TRANSITION_LATITUDE)) < 1e-15);
-/// assert!(dist((0.0, 0.0), proj(4.0 * FRAC_PI_2, 0.0)) < 1e-15);
-/// assert!(dist((0.0, -1.0), proj(0.0 * FRAC_PI_2, -TRANSITION_LATITUDE)) < 1e-15);
-/// assert!(dist((1.0, -2.0), proj(0.0 * FRAC_PI_2 + FRAC_PI_4, -FRAC_PI_2)) < 1e-15);
-/// assert!(dist((2.0, -1.0), proj(1.0 * FRAC_PI_2, -TRANSITION_LATITUDE)) < 1e-15);
-/// assert!(dist((3.0, -2.0), proj(1.0 * FRAC_PI_2 + FRAC_PI_4, -FRAC_PI_2)) < 1e-15);
-/// assert!(dist((4.0, -1.0), proj(2.0 * FRAC_PI_2, -TRANSITION_LATITUDE)) < 1e-15);
-/// assert!(dist((5.0, -2.0), proj(2.0 * FRAC_PI_2 + FRAC_PI_4, -FRAC_PI_2)) < 1e-15);
-/// assert!(dist((6.0, -1.0), proj(3.0 * FRAC_PI_2, -TRANSITION_LATITUDE)) < 1e-15);
-/// assert!(dist((7.0, -2.0), proj(3.0 * FRAC_PI_2 + FRAC_PI_4, -FRAC_PI_2)) < 1e-15);
-/// assert!(dist((0.0, -1.0), proj(4.0 * FRAC_PI_2, -TRANSITION_LATITUDE)) < 1e-15);
+/// assert!(distance((0.0, 0.0), proj([0.0 * FRAC_PI_2, 0.0])) < 1e-15);
+/// assert!(distance((0.0, 1.0), proj([0.0 * FRAC_PI_2, TRANSITION_LATITUDE])) < 1e-15);
+/// assert!(distance((1.0, 2.0), proj([0.0 * FRAC_PI_2 + FRAC_PI_4, FRAC_PI_2])) < 1e-15);
+/// assert!(distance((2.0, 1.0), proj([1.0 * FRAC_PI_2, TRANSITION_LATITUDE])) < 1e-15);
+/// assert!(distance((3.0, 2.0), proj([1.0 * FRAC_PI_2 + FRAC_PI_4, FRAC_PI_2])) < 1e-15);
+/// assert!(distance((4.0, 1.0), proj([2.0 * FRAC_PI_2 , TRANSITION_LATITUDE])) < 1e-15);
+/// assert!(distance((5.0, 2.0), proj([2.0 * FRAC_PI_2 + FRAC_PI_4, FRAC_PI_2])) < 1e-15);
+/// assert!(distance((6.0, 1.0), proj([3.0 * FRAC_PI_2, TRANSITION_LATITUDE])) < 1e-15);
+/// assert!(distance((7.0, 2.0), proj([3.0 * FRAC_PI_2 + FRAC_PI_4, FRAC_PI_2])) < 1e-15);
+/// assert!(distance((0.0, 1.0), proj([4.0 * FRAC_PI_2, TRANSITION_LATITUDE])) < 1e-15);
+/// assert!(distance((0.0, 0.0), proj([4.0 * FRAC_PI_2, 0.0])) < 1e-15);
+/// assert!(distance((0.0, -1.0), proj([0.0 * FRAC_PI_2, -TRANSITION_LATITUDE])) < 1e-15);
+/// assert!(distance((1.0, -2.0), proj([0.0 * FRAC_PI_2 + FRAC_PI_4, -FRAC_PI_2])) < 1e-15);
+/// assert!(distance((2.0, -1.0), proj([1.0 * FRAC_PI_2, -TRANSITION_LATITUDE])) < 1e-15);
+/// assert!(distance((3.0, -2.0), proj([1.0 * FRAC_PI_2 + FRAC_PI_4, -FRAC_PI_2])) < 1e-15);
+/// assert!(distance((4.0, -1.0), proj([2.0 * FRAC_PI_2, -TRANSITION_LATITUDE])) < 1e-15);
+/// assert!(distance((5.0, -2.0), proj([2.0 * FRAC_PI_2 + FRAC_PI_4, -FRAC_PI_2])) < 1e-15);
+/// assert!(distance((6.0, -1.0), proj([3.0 * FRAC_PI_2, -TRANSITION_LATITUDE])) < 1e-15);
+/// assert!(distance((7.0, -2.0), proj([3.0 * FRAC_PI_2 + FRAC_PI_4, -FRAC_PI_2])) < 1e-15);
+/// assert!(distance((0.0, -1.0), proj([4.0 * FRAC_PI_2, -TRANSITION_LATITUDE])) < 1e-15);
 ///
-/// assert!(dist((-0.0, 0.0), proj(-0.0 * FRAC_PI_2, 0.0)) < 1e-15);
-/// assert!(dist((-0.0, 1.0), proj(-0.0 * FRAC_PI_2, TRANSITION_LATITUDE)) < 1e-15);
-/// assert!(dist((-1.0, 2.0), proj(-0.0 * FRAC_PI_2 - FRAC_PI_4, FRAC_PI_2)) < 1e-15);
-/// assert!(dist((-2.0, 1.0), proj(-1.0 * FRAC_PI_2, TRANSITION_LATITUDE)) < 1e-15);
-/// assert!(dist((-3.0, 2.0), proj(-1.0 * FRAC_PI_2 - FRAC_PI_4, FRAC_PI_2)) < 1e-15);
-/// assert!(dist((-4.0, 1.0), proj(-2.0 * FRAC_PI_2 , TRANSITION_LATITUDE)) < 1e-15);
-/// assert!(dist((-5.0, 2.0), proj(-2.0 * FRAC_PI_2 - FRAC_PI_4, FRAC_PI_2)) < 1e-15);
-/// assert!(dist((-6.0, 1.0), proj(-3.0 * FRAC_PI_2, TRANSITION_LATITUDE)) < 1e-15);
-/// assert!(dist((-7.0, 2.0), proj(-3.0 * FRAC_PI_2 - FRAC_PI_4, FRAC_PI_2)) < 1e-15);
-/// assert!(dist((-0.0, 1.0), proj(-4.0 * FRAC_PI_2, TRANSITION_LATITUDE)) < 1e-15);
-/// assert!(dist((-0.0, 0.0), proj(-4.0 * FRAC_PI_2, 0.0)) < 1e-15);
-/// assert!(dist((-0.0, -1.0), proj(-0.0 * FRAC_PI_2, -TRANSITION_LATITUDE)) < 1e-15);
-/// assert!(dist((-1.0, -2.0), proj(-0.0 * FRAC_PI_2 - FRAC_PI_4, -FRAC_PI_2)) < 1e-15);
-/// assert!(dist((-2.0, -1.0), proj(-1.0 * FRAC_PI_2, -TRANSITION_LATITUDE)) < 1e-15);
-/// assert!(dist((-3.0, -2.0), proj(-1.0 * FRAC_PI_2 - FRAC_PI_4, -FRAC_PI_2)) < 1e-15);
-/// assert!(dist((-4.0, -1.0), proj(-2.0 * FRAC_PI_2, -TRANSITION_LATITUDE)) < 1e-15);
-/// assert!(dist((-5.0, -2.0), proj(-2.0 * FRAC_PI_2 - FRAC_PI_4, -FRAC_PI_2)) < 1e-15);
-/// assert!(dist((-6.0, -1.0), proj(-3.0 * FRAC_PI_2, -TRANSITION_LATITUDE)) < 1e-15);
-/// assert!(dist((-7.0, -2.0), proj(-3.0 * FRAC_PI_2 - FRAC_PI_4, -FRAC_PI_2)) < 1e-15);
-/// assert!(dist((-0.0, -1.0), proj(-4.0 * FRAC_PI_2, -TRANSITION_LATITUDE)) < 1e-15);
+/// assert!(distance((-0.0, 0.0), proj([-0.0 * FRAC_PI_2, 0.0])) < 1e-15);
+/// assert!(distance((-0.0, 1.0), proj([-0.0 * FRAC_PI_2, TRANSITION_LATITUDE])) < 1e-15);
+/// assert!(distance((-1.0, 2.0), proj([-0.0 * FRAC_PI_2 - FRAC_PI_4, FRAC_PI_2])) < 1e-15);
+/// assert!(distance((-2.0, 1.0), proj([-1.0 * FRAC_PI_2, TRANSITION_LATITUDE])) < 1e-15);
+/// assert!(distance((-3.0, 2.0), proj([-1.0 * FRAC_PI_2 - FRAC_PI_4, FRAC_PI_2])) < 1e-15);
+/// assert!(distance((-4.0, 1.0), proj([-2.0 * FRAC_PI_2 , TRANSITION_LATITUDE])) < 1e-15);
+/// assert!(distance((-5.0, 2.0), proj([-2.0 * FRAC_PI_2 - FRAC_PI_4, FRAC_PI_2])) < 1e-15);
+/// assert!(distance((-6.0, 1.0), proj([-3.0 * FRAC_PI_2, TRANSITION_LATITUDE])) < 1e-15);
+/// assert!(distance((-7.0, 2.0), proj([-3.0 * FRAC_PI_2 - FRAC_PI_4, FRAC_PI_2])) < 1e-15);
+/// assert!(distance((-0.0, 1.0), proj([-4.0 * FRAC_PI_2, TRANSITION_LATITUDE])) < 1e-15);
+/// assert!(distance((-0.0, 0.0), proj([-4.0 * FRAC_PI_2, 0.0])) < 1e-15);
+/// assert!(distance((-0.0, -1.0), proj([-0.0 * FRAC_PI_2, -TRANSITION_LATITUDE])) < 1e-15);
+/// assert!(distance((-1.0, -2.0), proj([-0.0 * FRAC_PI_2 - FRAC_PI_4, -FRAC_PI_2])) < 1e-15);
+/// assert!(distance((-2.0, -1.0), proj([-1.0 * FRAC_PI_2, -TRANSITION_LATITUDE])) < 1e-15);
+/// assert!(distance((-3.0, -2.0), proj([-1.0 * FRAC_PI_2 - FRAC_PI_4, -FRAC_PI_2])) < 1e-15);
+/// assert!(distance((-4.0, -1.0), proj([-2.0 * FRAC_PI_2, -TRANSITION_LATITUDE])) < 1e-15);
+/// assert!(distance((-5.0, -2.0), proj([-2.0 * FRAC_PI_2 - FRAC_PI_4, -FRAC_PI_2])) < 1e-15);
+/// assert!(distance((-6.0, -1.0), proj([-3.0 * FRAC_PI_2, -TRANSITION_LATITUDE])) < 1e-15);
+/// assert!(distance((-7.0, -2.0), proj([-3.0 * FRAC_PI_2 - FRAC_PI_4, -FRAC_PI_2])) < 1e-15);
+/// assert!(distance((-0.0, -1.0), proj([-4.0 * FRAC_PI_2, -TRANSITION_LATITUDE])) < 1e-15);
 /// ```
 #[inline]
-pub fn proj(lon: f64, lat: f64) -> (f64, f64) {
-    super::check_lat(lat);
-    let lon = abs_sign_decompose(lon);
-    let lat = abs_sign_decompose(lat);
+pub fn proj(coords: impl LonLatT) -> [f64; 2] {
+    super::check_lat(coords.lat());
+    let lon = abs_sign_decompose(coords.lon());
+    let lat = abs_sign_decompose(coords.lat());
     let x = pm1_offset_decompose(lon.abs / FRAC_PI_4);
-    let mut xy = (x.pm1, lat.abs);
+    let mut xy = [x.pm1, lat.abs];
     if is_in_equatorial_region(lat.abs) {
         proj_cea(&mut xy);
     } else {
@@ -456,13 +459,14 @@ pub fn base_cell_from_proj_coo(x: f64, y: f64) -> u8 {
 /// # Examples
 /// To obtain the WCS un-projection (see Calabretta2007), you can write:
 /// ```rust
+/// use healpix::coords::LonLat;
 /// use healpix::proj::unproj;
 /// use std::f64::consts::{PI, FRAC_PI_2, FRAC_PI_4};
 ///
 /// let x = 2.1f64;
 /// let y = 0.36f64;
 ///
-/// let (mut lon, mut lat) = unproj(x / FRAC_PI_4, y / FRAC_PI_4);
+/// let LonLat { mut lon, mut lat } = unproj(x / FRAC_PI_4, y / FRAC_PI_4);
 /// if lon < 0f64 {
 ///     lon += 2f64 * PI;
 /// }
@@ -475,13 +479,8 @@ pub fn base_cell_from_proj_coo(x: f64, y: f64) -> u8 {
 /// ```rust
 /// use healpix::{TRANSITION_LATITUDE};
 /// use healpix::proj::{proj, unproj};
+/// use healpix::geo::distance;
 /// use std::f64::consts::{FRAC_PI_2, FRAC_PI_4};
-///
-/// fn dist(p1: (f64, f64), p2: (f64, f64)) -> f64 {
-///     let sindlon = f64::sin(0.5 * (p2.0 - p1.0));
-///     let sindlat = f64::sin(0.5 * (p2.1 - p1.1));
-///     2f64 * f64::asin(f64::sqrt(sindlat * sindlat + p1.1.cos() * p2.1.cos() * sindlon * sindlon))
-/// }
 ///
 /// let points: [(f64, f64); 40] = [
 ///     (0.0 * FRAC_PI_2, 0.0),
@@ -527,25 +526,25 @@ pub fn base_cell_from_proj_coo(x: f64, y: f64) -> u8 {
 /// ];
 ///
 /// for (lon, lat) in points.iter() {
-///     let (x, y): (f64, f64) = proj(*lon, *lat);
-///     assert!(dist((*lon, *lat), unproj(x, y)) < 1e-15);
+///     let [x, y] = proj([*lon, *lat]);
+///     assert!(distance((*lon, *lat), unproj(x, y)) < 1e-15);
 /// }
 /// ```
 #[inline]
-pub fn unproj(x: f64, y: f64) -> (f64, f64) {
+pub fn unproj(x: f64, y: f64) -> LonLat {
     check_y(y);
     let x = abs_sign_decompose(x);
     let y = abs_sign_decompose(y);
     let lon = pm1_offset_decompose(x.abs);
-    let mut lonlat = (lon.pm1, y.abs);
+    let mut lonlat = [lon.pm1, y.abs];
     if is_in_projected_equatorial_region(y.abs) {
         deproj_cea(&mut lonlat);
     } else {
         deproj_collignon(&mut lonlat);
     }
     apply_offset_and_signs(&mut lonlat, lon.offset, x.sign, y.sign);
-    lonlat.0 *= FRAC_PI_4;
-    lonlat
+    lonlat[0] *= FRAC_PI_4;
+    lonlat.into()
 }
 
 /// Verify that the projected y coordinate is in [-2, 2], panics if not.
@@ -599,28 +598,28 @@ pub(crate) fn pm1_offset_decompose(x: f64) -> OffsetAndPM1 {
 
 // Cylindrical Equal Area projection
 #[inline]
-pub(crate) fn proj_cea(xy: &mut (f64, f64)) {
-    let (_, ref mut y) = *xy;
+pub(crate) fn proj_cea(xy: &mut [f64; 2]) {
+    let [_, ref mut y] = *xy;
     *y = f64::sin(*y) / TRANSITION_Z;
 }
 #[inline]
-fn deproj_cea(lonlat: &mut (f64, f64)) {
-    let (_, ref mut lat) = *lonlat;
+fn deproj_cea(lonlat: &mut [f64; 2]) {
+    let [_, ref mut lat] = *lonlat;
     // Using asin is OK here since |lat*TRANSITION_Z| < 2/3, so not near from 1.
     *lat = f64::asin((*lat) * TRANSITION_Z);
 }
 
 // Collignon projection
 #[inline]
-pub(crate) fn proj_collignon(xy: &mut (f64, f64)) {
-    let (ref mut x, ref mut y) = *xy;
+pub(crate) fn proj_collignon(xy: &mut [f64; 2]) {
+    let [ref mut x, ref mut y] = *xy;
     *y = SQRT_6 * f64::cos(0.5 * *y + FRAC_PI_4);
     *x *= *y;
     *y = 2.0 - *y;
 }
 #[inline]
-fn deproj_collignon(lonlat: &mut (f64, f64)) {
-    let (ref mut lon, ref mut lat) = *lonlat;
+fn deproj_collignon(lonlat: &mut [f64; 2]) {
+    let [ref mut lon, ref mut lat] = *lonlat;
     *lat = 2.0 - *lat;
     if *lat > 1e-13 {
         // Rare, so few risks of branch miss-prediction
@@ -634,8 +633,8 @@ fn deproj_collignon(lonlat: &mut (f64, f64)) {
 
 // Shift x by the given offset and apply lon and lat signs to x and y respectively
 #[inline]
-fn apply_offset_and_signs(ab: &mut (f64, f64), off: u8, a_sign: u64, b_sign: u64) {
-    let (ref mut a, ref mut b) = *ab;
+fn apply_offset_and_signs(ab: &mut [f64; 2], off: u8, a_sign: u64, b_sign: u64) {
+    let [ref mut a, ref mut b] = *ab;
     *a += off as f64;
     *a = f64::from_bits(f64::to_bits(*a) | a_sign);
     *b = f64::from_bits(f64::to_bits(*b) | b_sign);

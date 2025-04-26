@@ -1,5 +1,6 @@
 use super::*;
 use crate::bmoc::Bmoc;
+use crate::coords::Degrees;
 use crate::dir::map::DirectionMap;
 use Direction::*;
 use std::f64::consts::PI;
@@ -7,65 +8,26 @@ use std::f64::consts::PI;
 #[test]
 fn testok_hash_d0() {
     let layer = get(0);
-    assert_eq!(
-        4_u64,
-        layer.hash(0.0_f64.to_radians(), 0.0_f64.to_radians())
-    );
-    assert_eq!(
-        5_u64,
-        layer.hash(90.0_f64.to_radians(), 0.0_f64.to_radians())
-    );
-    assert_eq!(
-        6_u64,
-        layer.hash(180.0_f64.to_radians(), 0.0_f64.to_radians())
-    );
-    assert_eq!(
-        7_u64,
-        layer.hash(270.0_f64.to_radians(), 0.0_f64.to_radians())
-    );
+    assert_eq!(4_u64, layer.hash(Degrees(0.0, 0.0)));
+    assert_eq!(5_u64, layer.hash(Degrees(90.0, 0.0)));
+    assert_eq!(6_u64, layer.hash(Degrees(180.0, 0.0)));
+    assert_eq!(7_u64, layer.hash(Degrees(270.0, 0.0)));
 
-    assert_eq!(
-        0_u64,
-        layer.hash(45.0_f64.to_radians(), 41.0_f64.to_radians())
-    );
-    assert_eq!(
-        1_u64,
-        layer.hash(135.0_f64.to_radians(), 41.0_f64.to_radians())
-    );
-    assert_eq!(
-        2_u64,
-        layer.hash(225.0_f64.to_radians(), 41.0_f64.to_radians())
-    );
-    assert_eq!(
-        3_u64,
-        layer.hash(315.0_f64.to_radians(), 41.0_f64.to_radians())
-    );
+    assert_eq!(0_u64, layer.hash(Degrees(45.0, 41.0)));
+    assert_eq!(1_u64, layer.hash(Degrees(135.0, 41.0)));
+    assert_eq!(2_u64, layer.hash(Degrees(225.0, 41.0)));
+    assert_eq!(3_u64, layer.hash(Degrees(315.0, 41.0)));
 
-    assert_eq!(
-        8_u64,
-        layer.hash(45.0_f64.to_radians(), -41.0_f64.to_radians())
-    );
-    assert_eq!(
-        9_u64,
-        layer.hash(135.0_f64.to_radians(), -41.0_f64.to_radians())
-    );
-    assert_eq!(
-        10_u64,
-        layer.hash(225.0_f64.to_radians(), -41.0_f64.to_radians())
-    );
-    assert_eq!(
-        11_u64,
-        layer.hash(315.0_f64.to_radians(), -41.0_f64.to_radians())
-    );
+    assert_eq!(8_u64, layer.hash(Degrees(45.0, -41.0)));
+    assert_eq!(9_u64, layer.hash(Degrees(135.0, -41.0)));
+    assert_eq!(10_u64, layer.hash(Degrees(225.0, -41.0)));
+    assert_eq!(11_u64, layer.hash(Degrees(315.0, -41.0)));
 }
 
 #[test]
 fn testok_hash() {
     let layer = get(3);
-    let hash = layer.hash(
-        333.5982493968911_f64.to_radians(),
-        -25.919634217871433_f64.to_radians(),
-    );
+    let hash = layer.hash(Degrees(333.5982493968911, -25.919634217871433));
     assert_eq!(735_u64, hash);
 }
 
@@ -75,7 +37,7 @@ fn testok_hash_2() {
     let layer = get(0);
     // ra = 179.99999999999998633839 deg
     // de = -48.13786699999999889561 deg
-    let hash = layer.hash(3.141592653589793, -0.8401642740371252);
+    let hash = layer.hash([3.141592653589793, -0.8401642740371252]);
     // The difference comes from the fact that:
     //   ra * 4/pi = 4.0 instead of 3.99999999999999969640 due to numerical approximations.
     // In v1, it is a particular case (k=3) in depth0_bits, but we do not handle all of them
@@ -92,7 +54,7 @@ fn testok_hash_3() {
     let layer = get(0);
     // ra = 89.99999999999999889877 deg
     // de = -42.68491599999999973256 deg
-    let hash = layer.hash(1.5707963267948966, -0.7449923251372079);
+    let hash = layer.hash([1.5707963267948966, -0.7449923251372079]);
     // The difference comes from the fact that:
     //   ra * 4/pi = 2.0 instead of 1.99999999999999997552 due to numerical approximations.
     // In v1, it is a particular case (k=3) in depth0_bits, but we do not handle all of them
@@ -108,7 +70,7 @@ fn testok_hash_4() {
     let layer = get(3);
     let ra = 180.0_f64;
     let dec = -45.85_f64;
-    let hash = layer.hash(ra.to_radians(), dec.to_radians());
+    let hash = layer.hash(Degrees(ra, dec));
     assert_eq!(682_u64, hash);
 }
 
@@ -472,8 +434,7 @@ fn testok_conecenter_bmoc_dbg() {
     let lon = 13.158329_f64;
     let lat = -72.80028_f64;
     let radius = 5.64323_f64;
-    let actual_res =
-        get(depth).cone_coverage_centers(lon.to_radians(), lat.to_radians(), radius.to_radians());
+    let actual_res = get(depth).cone_coverage_centers(Degrees(lon, lat), radius.to_radians());
     let expected_res: [u64; 7] = [2058, 2059, 2080, 2081, 2082, 2083, 2088];
     // println!("draw red circle({} {} {}deg)", lon, lat, radius);
     // to_aladin_moc(&actual_res);
@@ -490,8 +451,7 @@ fn testok_conefullin_bmoc_dbg() {
     let lon = 13.158329_f64;
     let lat = -72.80028_f64;
     let radius = 5.64323_f64;
-    let actual_res =
-        get(depth).cone_coverage_fullin(lon.to_radians(), lat.to_radians(), radius.to_radians());
+    let actual_res = get(depth).cone_coverage_fullin(Degrees(lon, lat), radius.to_radians());
     let expected_res: [u64; 2] = [2081, 2082];
     println!("draw red circle({} {} {}deg)", lon, lat, radius);
     to_aladin_moc(&actual_res);
@@ -509,8 +469,7 @@ fn testok_ring_bmoc_dbg() {
     let radius_int = 5.64323_f64;
     let radius_ext = 10.0_f64;
     let actual_res = get(depth).ring_coverage_approx(
-        lon.to_radians(),
-        lat.to_radians(),
+        Degrees(lon, lat),
         radius_int.to_radians(),
         radius_ext.to_radians(),
     );
@@ -537,8 +496,7 @@ fn testok_ring_bmoc() {
     let radius_ext = 10.0_f64;
     let actual_res = get(depth).ring_coverage_approx_custom(
         2,
-        lon.to_radians(),
-        lat.to_radians(),
+        Degrees(lon, lat),
         radius_int.to_radians(),
         radius_ext.to_radians(),
     );
@@ -2628,7 +2586,7 @@ fn test_prec_1() {
     let d0h_bits = layer_0.depth0_bits(ij_d0c.0, ij_d0c.1/*, &mut ij, xy, lon, lat*/);
     println!("d0h_bits: {}", d0h_bits);*/
     let layer_0 = get(0);
-    assert_eq!(1, layer_0.hash(lon_deg.to_radians(), lat_deg.to_radians()));
+    assert_eq!(1, layer_0.hash(Degrees(lon_deg, lat_deg)));
 }
 
 #[test]
@@ -2645,7 +2603,7 @@ fn test_prec_2() {
     let ij_d0c = layer_1.base_cell_coos(&ij);
     println!("i0: {}, j0: {}", ij_d0c.0, ij_d0c.1);*/
     let layer_1 = get(1);
-    assert_eq!(13, layer_1.hash(lon_deg.to_radians(), lat_deg.to_radians()));
+    assert_eq!(13, layer_1.hash(Degrees(lon_deg, lat_deg)));
 }
 
 #[test]
@@ -2667,10 +2625,7 @@ fn test_prec_3() {
     println!("hash: {}", layer_0.hash(lon_deg.to_radians(), lat_deg.to_radians()));*/
 
     let layer_6 = get(6);
-    assert_eq!(
-        13653,
-        layer_6.hash(lon_deg.to_radians(), lat_deg.to_radians())
-    );
+    assert_eq!(13653, layer_6.hash(Degrees(lon_deg, lat_deg)));
 }
 
 /*
@@ -2702,7 +2657,7 @@ fn test_prec_4() {
 fn test_bilinear_interpolation() {
     let lon_deg = 89.18473162_f64; // 322.99297784_f64;// 324.8778822_f64
     let lat_deg = -28.04159707_f64; // 39.9302924_f64;// -41.08635508_f64
-    let res = get(1).bilinear_interpolation(lon_deg.to_radians(), lat_deg.to_radians());
+    let res = get(1).bilinear_interpolation(Degrees(lon_deg, lat_deg));
     // println!("{:?}", res);
     // // Result with previous version of hash_dxdy_v1 !
     // assert_eq!(
@@ -2731,8 +2686,9 @@ fn test_bilinear_interpolation() {
                 (38, 0.1661686383097213),
                 (33, 0.20240278853194385),
                 (20, 0.6314285731583348)
-            ],)
-            .all(|((ai, af), (bi, bf))| ai == bi && (af - bf).abs() < 0.0000001)
+            ])
+            .all(|((ai, af), (bi, bf))| ai == bi && (af - bf).abs() < 0.0000001),
+        "left: {res:?}, right: [(20, 0.0), (38, 0.1661686383097213), (33, 0.20240278853194385), (20, 0.6314285731583348)]"
     );
 }
 
@@ -2740,7 +2696,7 @@ fn test_bilinear_interpolation() {
 fn test_bilinear_interpolation_2() {
     let lon_deg = 83.633478_f64;
     let lat_deg = 22.015110_f64;
-    let res = get(18).bilinear_interpolation(lon_deg.to_radians(), lat_deg.to_radians());
+    let res = get(18).bilinear_interpolation(Degrees(lon_deg, lat_deg));
     // println!("{:?}", res);
     // // Result with previous version of hash_dxdy_v1 !
     // assert_eq!(
@@ -2759,8 +2715,9 @@ fn test_bilinear_interpolation_2() {
                 (405766747917, 0.3604806280331154),
                 (405766747918, 0.039217694661061175),
                 (405766747919, 0.024554563745909478)
-            ],)
-            .all(|((ai, af), (bi, bf))| ai == bi && (af - bf).abs() < 0.0000001)
+            ])
+            .all(|((ai, af), (bi, bf))| ai == bi && (af - bf).abs() < 0.0000001),
+        "left: {res:?}, right: [(405766747916, 0.5757471135599139), (405766747917, 0.3604806280331154), (405766747918, 0.039217694661061175), (405766747919, 0.024554563745909478)]"
     );
 }
 
@@ -2770,9 +2727,8 @@ fn test_bilinear_interpolation_3() {
     let lon_rad = [0.17453293_f64, 0.43633231_f64, 0.0_f64];
     let lat_rad = [0.08726646_f64, 0.17453293_f64, 0.78539816_f64];
     let depth = 5;
-    for (lon, lat) in lon_rad.iter().zip(lat_rad.iter()) {
-        println!("({lon}, {lat})");
-        let res = get(depth).bilinear_interpolation(*lon, *lat);
+    for (lon, lat) in lon_rad.into_iter().zip(lat_rad) {
+        let res = get(depth).bilinear_interpolation(Degrees(lon, lat));
         println!("{:?}", res);
     }
 }
@@ -2789,7 +2745,7 @@ fn test_gen_file() -> std::io::Result<()> {
     let mut s = String::with_capacity(8 * 1024);
     s.push_str("i,ra,dec\n");
     for h in 0..n_cells {
-        let (lon, lat) = layer.center(h);
+        let LonLat { lon, lat } = layer.center(h);
         s.push_str(&format!(
             "{},{},{}\n",
             &h,

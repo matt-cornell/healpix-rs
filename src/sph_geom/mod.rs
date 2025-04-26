@@ -6,7 +6,8 @@ pub(crate) mod coo3d;
 pub(crate) mod frame;
 pub(crate) mod zone;
 
-use self::coo3d::{Coo3D, LonLat, LonLatT, UnitVect3, Vec3, Vect3, cross_product, dot_product};
+use self::coo3d::{Coo3D, UnitVect3, Vec3, Vect3, cross_product, dot_product};
+use crate::coords::{LonLat, LonLatT};
 use std::f64::consts::{PI, TAU};
 
 trait ContainsSouthPoleComputer {
@@ -502,11 +503,7 @@ impl Polygon {
 
 #[inline]
 fn lonlat2coo3d(vertices: &[LonLat]) -> Box<[Coo3D]> {
-    vertices
-        .iter()
-        .map(|lonlat| Coo3D::from_sph_coo(lonlat.lon, lonlat.lat))
-        .collect::<Vec<Coo3D>>()
-        .into_boxed_slice()
+    vertices.iter().copied().map(Coo3D::from_sph_coo).collect()
 }
 
 #[inline]
@@ -706,18 +703,7 @@ mod tests {
         let poly = create_polygon_from_lonlat(&v);
         let depth = 3_u8;
         let hash = 305_u64;
-        let [
-            (l_south, b_south),
-            (l_east, b_east),
-            (l_north, b_north),
-            (l_west, b_west),
-        ] = Layer::get(depth).vertices(hash);
-        let v = [
-            Coo3D::from_sph_coo(l_south, b_south),
-            Coo3D::from_sph_coo(l_east, b_east),
-            Coo3D::from_sph_coo(l_north, b_north),
-            Coo3D::from_sph_coo(l_west, b_west),
-        ];
+        let v = Layer::get(depth).vertices(hash).map(Coo3D::from_sph_coo);
         assert!(!poly.contains(&v[0]));
         assert!(!poly.contains(&v[1]));
         assert!(poly.contains(&v[2]));

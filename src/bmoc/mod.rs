@@ -1,5 +1,7 @@
 use triomphe::Arc;
 
+use crate::coords::LonLatT;
+
 pub mod iter;
 mod ops;
 
@@ -470,10 +472,18 @@ pub trait Bmoc {
     {
         self.max_depth() == other.max_depth() && self.entries() == other.entries()
     }
+    /// See [`test_coo`](Bmoc::test_coo).
+    #[inline(always)]
+    fn test_coo_dyn(&self, lon: f64, lat: f64) -> Status {
+        test_coo(self.max_depth(), self.entries(), lon, lat)
+    }
     /// Test the given point and return its "Status": in, out of the MOC or maybe.
     #[inline(always)]
-    fn test_coo(&self, lon: f64, lat: f64) -> Status {
-        test_coo(self.max_depth(), self.entries(), lon, lat)
+    fn test_coo(&self, coords: impl LonLatT) -> Status
+    where
+        Self: Sized,
+    {
+        test_coo(self.max_depth(), self.entries(), coords.lon(), coords.lat())
     }
     /// Test the given cell and return whether it's inside or outside of the MOC.
     ///
@@ -688,7 +698,7 @@ fn is_in(low_resolution: &Cell, high_resolution: &Cell) -> bool {
 fn test_coo(max_depth: u8, entries: &[u64], lon: f64, lat: f64) -> Status {
     let h_raw = encode_raw_value(
         max_depth,
-        crate::Layer::get(max_depth).hash(lon, lat),
+        crate::Layer::get(max_depth).hash([lon, lat]),
         true,
         max_depth,
     );

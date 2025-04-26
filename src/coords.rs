@@ -98,6 +98,12 @@ impl From<LonLat> for [f64; 2] {
 pub trait LonLatT {
     fn lon(&self) -> f64;
     fn lat(&self) -> f64;
+    fn as_lonlat(&self) -> LonLat {
+        LonLat {
+            lon: self.lon(),
+            lat: self.lat(),
+        }
+    }
 }
 impl LonLatT for LonLat {
     fn lon(&self) -> f64 {
@@ -137,5 +143,17 @@ impl LonLatT for [f32; 2] {
     }
     fn lat(&self) -> f64 {
         self[1] as _
+    }
+}
+
+/// A longitude-latitude pair in degrees.
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
+pub struct Degrees(pub f64, pub f64);
+impl LonLatT for Degrees {
+    fn lon(&self) -> f64 {
+        self.0.to_radians()
+    }
+    fn lat(&self) -> f64 {
+        self.1.to_radians()
     }
 }

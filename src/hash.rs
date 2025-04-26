@@ -1,4 +1,7 @@
-use crate::{FRAC_PI_2, FRAC_PI_4, SQRT_6, TRANSITION_LATITUDE, TRANSITION_Z, proj, unchecked};
+use crate::coords::LonLatT;
+use crate::{
+    FRAC_PI_2, FRAC_PI_4, LonLat, SQRT_6, TRANSITION_LATITUDE, TRANSITION_Z, proj, unchecked,
+};
 
 impl super::Layer {
     /// Returns the cell number (hash value) associated with the given position on the unit sphere
@@ -15,14 +18,18 @@ impl super::Layer {
     /// # Examples
     /// ```rust
     /// use healpix::checked::nside;
+    /// use healpix::coords::Degrees;
     /// use healpix::get;
     ///
     /// let depth = 12_u8;
     /// let nside = nside(depth) as u64;
     /// let nested12 = get(depth);
-    /// assert_eq!(nside * nside - 1, nested12.hash(12.5_f64.to_radians(), 89.99999_f64.to_radians()));
+    /// assert_eq!(nside * nside - 1, nested12.hash(Degrees(12.5_f64, 89.99999_f64)));
     /// ```
-    pub fn hash(&self, lon: f64, lat: f64) -> u64 {
+    pub fn hash(&self, coords: impl LonLatT) -> u64 {
+        self.hash_impl(coords.lon(), coords.lat())
+    }
+    fn hash_impl(&self, lon: f64, lat: f64) -> u64 {
         crate::check_lat(lat);
         let (d0h, l_in_d0c, h_in_d0c) = Self::d0h_lh_in_d0c(lon, lat);
         // Coords inside the base cell
@@ -47,11 +54,12 @@ impl super::Layer {
         self.build_hash_from_parts(d0h, i, j)
     }
 
-    pub fn try_hash(&self, lon: f64, lat: f64) -> Result<u64, f64> {
+    pub fn try_hash(&self, coords: impl LonLatT) -> Result<u64, f64> {
+        let lat = coords.lat();
         if lat.abs() > FRAC_PI_2 {
             return Err(lat);
         }
-        Ok(self.hash(lon, lat))
+        Ok(self.hash_impl(coords.lon(), lat))
     }
 
     #[inline]
@@ -140,15 +148,18 @@ impl super::Layer {
     /// let nside = nside(depth) as u64;
     /// let nested12 = get(depth);
     /// let h_org = nside * nside - 1;
-    /// let (h_ra, h_dec) = nested12.center(h_org);
-    /// let (h, dx, dy) = nested12.hash_with_dxdy(h_ra, h_dec);
+    /// let [h_ra, h_dec] = nested12.center(h_org).as_f64s();
+    /// let (h, dx, dy) = nested12.hash_with_dxdy([h_ra, h_dec]);
     /// assert_eq!(h_org, h);
     /// // A precision of 1e-12 in a cell of depth 12 (side of ~51.5 arcsec)
     /// // leads to an absolute precision of ~0.05 nanoarcsec
     /// assert!((dx - 0.5).abs() < 1e-12_f64);
     /// assert!((dy - 0.5).abs() < 1e-12_f64);
     /// ```
-    pub fn hash_with_dxdy(&self, lon: f64, lat: f64) -> (u64, f64, f64) {
+    pub fn hash_with_dxdy(&self, coords: impl LonLatT) -> (u64, f64, f64) {
+        self.hash_with_dxdy_impl(coords.lon(), coords.lat())
+    }
+    fn hash_with_dxdy_impl(&self, lon: f64, lat: f64) -> (u64, f64, f64) {
         crate::check_lat(lat);
         let (d0h, l_in_d0c, h_in_d0c) = Self::d0h_lh_in_d0c(lon, lat);
         let x =
@@ -208,22 +219,17 @@ impl super::Layer {
     /// # Example
     /// ```rust
     /// use std::f64::consts::PI;
+    /// use healpix::geo::distance;
     /// use healpix::{TRANSITION_LATITUDE, get};
-    ///
-    /// fn dist(p1: (f64, f64), p2: (f64, f64)) -> f64 {
-    ///   let sindlon = f64::sin(0.5 * (p2.0 - p1.0));
-    ///   let sindlat = f64::sin(0.5 * (p2.1 - p1.1));
-    ///   2f64 * f64::asin(f64::sqrt(sindlat * sindlat + p1.1.cos() * p2.1.cos() * sindlon * sindlon))
-    /// }
     ///
     /// let depth = 0u8;
     /// let nested0 = get(depth);
     ///
-    /// assert!(dist((PI / 4f64, TRANSITION_LATITUDE) , nested0.center(0u64)) < 1e-15);
+    /// assert!(distance([PI / 4f64, TRANSITION_LATITUDE], nested0.center(0u64)) < 1e-15);
     /// ```
     ///
     #[inline]
-    pub fn center(&self, hash: u64) -> (f64, f64) {
+    pub fn center(&self, hash: u64) -> LonLat {
         let (x, y) = self.center_of_projected_cell(hash);
         proj::unproj(x, y)
     }
@@ -250,27 +256,22 @@ impl super::Layer {
     ///
     /// # Example
     /// ```rust
+    /// use healpix::geo::distance;
     /// use healpix::get;
-    ///
-    /// fn dist(p1: (f64, f64), p2: (f64, f64)) -> f64 {
-    ///   let sindlon = f64::sin(0.5 * (p2.0 - p1.0));
-    ///   let sindlat = f64::sin(0.5 * (p2.1 - p1.1));
-    ///   2f64 * f64::asin(f64::sqrt(sindlat * sindlat + p1.1.cos() * p2.1.cos() * sindlon * sindlon))
-    /// }
     ///
     /// let depth = 0u8;
     /// let nested0 = get(depth);
     ///
-    /// assert!(dist(nested0.sph_coo(0, 0.5, 0.5) , nested0.center(0)) < 1e-15);
+    /// assert!(distance(nested0.sph_coo(0, 0.5, 0.5), nested0.center(0)) < 1e-15);
     /// ```
     ///
-    pub fn sph_coo(&self, hash: u64, dx: f64, dy: f64) -> (f64, f64) {
+    pub fn sph_coo(&self, hash: u64, dx: f64, dy: f64) -> [f64; 2] {
         assert!((0.0..1.0).contains(&dx));
         assert!((0.0..1.0).contains(&dy));
         let (mut x, mut y) = self.center_of_projected_cell(hash);
         x += (dx - dy) * self.one_over_nside;
         y += (dx + dy - 1.0) * self.one_over_nside;
-        proj::unproj(x.rem_euclid(8.0), y)
+        proj::unproj(x.rem_euclid(8.0), y).as_f64s()
     }
 
     #[inline]

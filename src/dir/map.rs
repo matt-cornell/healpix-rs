@@ -18,6 +18,12 @@ impl<K, V, const N: usize> EnumMap<K, V, N> {
             _marker: PhantomData,
         }
     }
+    pub fn len(&self) -> usize {
+        self.values.iter().filter(|v| v.is_some()).count()
+    }
+    pub fn is_empty(&self) -> bool {
+        self.values.iter().all(Option::is_none)
+    }
 }
 impl<K: Enum, V, const N: usize> EnumMap<K, V, N> {
     pub fn iter(&self) -> MapIter<'_, K, V> {

@@ -23,6 +23,12 @@ impl<K, const N: usize> EnumSet<K, N> {
             _marker: PhantomData,
         }
     }
+    pub fn len(&self) -> usize {
+        self.values.iter().filter(|&&v| v).count()
+    }
+    pub fn is_empty(&self) -> bool {
+        self.values.iter().all(|&v| !v)
+    }
 }
 impl<K: Enum, const N: usize> EnumSet<K, N> {
     pub fn iter(&self) -> SetIter<K, N> {

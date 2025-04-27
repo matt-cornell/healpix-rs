@@ -296,6 +296,29 @@ pub struct SharedBmoc {
     pub max_depth: u8,
     pub entries: Arc<[u64]>,
 }
+impl Bmoc for SharedBmoc {
+    #[inline(always)]
+    fn max_depth(&self) -> u8 {
+        self.max_depth
+    }
+    #[inline(always)]
+    fn entries(&self) -> &[u64] {
+        &self.entries
+    }
+}
+impl From<MutableBmoc> for SharedBmoc {
+    fn from(value: MutableBmoc) -> Self {
+        value.into_shared()
+    }
+}
+impl Default for SharedBmoc {
+    fn default() -> Self {
+        Self {
+            max_depth: 0,
+            entries: std::iter::empty().collect(),
+        }
+    }
+}
 impl SharedBmoc {
     #[inline(always)]
     pub fn new_empty(depth: u8) -> Self {
@@ -334,24 +357,9 @@ impl SharedBmoc {
         iter::FlaggedRangeIter::new(self.max_depth, iter::ArcIter::new(self.entries))
     }
 }
-impl Bmoc for SharedBmoc {
-    #[inline(always)]
-    fn max_depth(&self) -> u8 {
-        self.max_depth
-    }
-    #[inline(always)]
-    fn entries(&self) -> &[u64] {
-        &self.entries
-    }
-}
-impl From<MutableBmoc> for SharedBmoc {
-    fn from(value: MutableBmoc) -> Self {
-        value.into_shared()
-    }
-}
 
 /// A borrowed [BMOC](Bmoc) backed by a slice.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct BorrowedBmoc<'a> {
     pub max_depth: u8,
     pub entries: &'a [u64],

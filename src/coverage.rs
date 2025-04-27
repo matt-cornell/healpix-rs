@@ -37,7 +37,12 @@ impl super::Layer {
     /// * if `lon_min` or `lon_max` not in `[0, 2\pi[`
     /// * if `lat_min` or `lat_max` not in `[-\pi/2, \pi/2[`
     /// * `lat_min >= lat_max`.
-    pub fn zone_coverage(
+    #[inline(always)]
+    pub fn zone_coverage(&self, min: impl LonLatT, max: impl LonLatT) -> MutableBmoc {
+        self.zone_coverage_impl(min.lon(), min.lat(), max.lon(), max.lat())
+    }
+    #[inline(never)]
+    fn zone_coverage_impl(
         &self,
         lon_min: f64,
         lat_min: f64,
@@ -225,9 +230,11 @@ impl super::Layer {
     /// let expected_res: [u64; 7] = [2058, 2059, 2080, 2081, 2082, 2083, 2088];
     /// assert_eq!(actual_res.into_flat_iter().collect::<Vec<_>>(), expected_res);
     /// ```
+    #[inline(always)]
     pub fn cone_coverage_centers(&self, center: impl LonLatT, radius: f64) -> MutableBmoc {
         self.cone_coverage_centers_impl(center.lon(), center.lat(), radius)
     }
+    #[inline(never)]
     fn cone_coverage_centers_impl(
         &self,
         cone_lon: f64,
@@ -422,10 +429,12 @@ impl super::Layer {
     /// let expected_res: [u64; 2] = [2081, 2082];
     /// assert_eq!(actual_res.into_flat_iter().collect::<Vec<_>>(), expected_res);
     /// ```
+    #[inline(always)]
     pub fn cone_coverage_fullin(&self, center: impl LonLatT, radius: f64) -> MutableBmoc {
         self.cone_coverage_fullin_impl(center.lon(), center.lat(), radius)
     }
-    pub fn cone_coverage_fullin_impl(
+    #[inline(never)]
+    fn cone_coverage_fullin_impl(
         &self,
         cone_lon: f64,
         cone_lat: f64,
@@ -944,17 +953,12 @@ impl super::Layer {
     /// let lat = -72.80028_f64.to_radians();
     /// let radius = 5.64323_f64.to_radians();
     ///
-    /// let actual_res = nested3.cone_coverage_approx(lon, lat, radius);
+    /// let actual_res = nested3.cone_coverage_approx([lon, lat], radius);
     /// let expected_res: [u64; 10] = [512, 514, 515, 520, 521, 522, 544, 705, 708, 709];
     /// assert_eq!(actual_res.into_flat_iter().collect::<Vec<_>>(), expected_res);
     /// ```
-    pub fn cone_coverage_approx(
-        &self,
-        cone_lon: f64,
-        cone_lat: f64,
-        cone_radius: f64,
-    ) -> MutableBmoc {
-        self.cone_coverage_approx_internal(cone_lon, cone_lat, cone_radius)
+    pub fn cone_coverage_approx(&self, center: impl LonLatT, radius: f64) -> MutableBmoc {
+        self.cone_coverage_approx_internal(center.lon(), center.lat(), radius)
             .into_packed()
     }
 
@@ -990,23 +994,22 @@ impl super::Layer {
     /// let lat = -72.80028_f64.to_radians();
     /// let radius = 5.64323_f64.to_radians();
     ///
-    /// let actual_res = nested3.cone_coverage_approx_custom(2, lon, lat, radius);
+    /// let actual_res = nested3.cone_coverage_approx_custom(2, [lon, lat], radius);
     /// let expected_res: [u64; 8] = [514, 515, 520, 521, 522, 705, 708, 709];
     /// assert_eq!(actual_res.into_flat_iter().collect::<Vec<_>>(), expected_res);
     /// ```
     pub fn cone_coverage_approx_custom(
         &self,
         delta_depth: u8,
-        cone_lon: f64,
-        cone_lat: f64,
-        cone_radius: f64,
+        center: impl LonLatT,
+        radius: f64,
     ) -> MutableBmoc {
         if delta_depth == 0 {
-            self.cone_coverage_approx(cone_lon, cone_lat, cone_radius)
+            self.cone_coverage_approx(center, radius)
         } else {
             // TODO: change the algo not to put all cell in the MOC before pruning it
             Self::get(self.depth + delta_depth)
-                .cone_coverage_approx_internal(cone_lon, cone_lat, cone_radius)
+                .cone_coverage_approx_internal(center.lon(), center.lat(), radius)
                 .into_packed()
                 .lower_depth(self.depth)
                 .take()

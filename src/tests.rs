@@ -312,11 +312,8 @@ fn testok_external_edge_struct_v3() {
 fn testok_cone_approx_bmoc() {
     // let res = cone_overlap_approx(5, 0.01, 0.02, 0.05);
     // let res = cone_overlap_approx(6, 160.771389_f64.to_radians(), 64.3813_f64.to_radians(), 0.8962_f64.to_radians());
-    let actual_res = get(3).cone_coverage_approx(
-        13.158329_f64.to_radians(),
-        -72.80028_f64.to_radians(),
-        5.64323_f64.to_radians(),
-    );
+    let actual_res =
+        get(3).cone_coverage_approx(Degrees(13.158329, -72.80028), 5.64323_f64.to_radians());
     let expected_res: [u64; 10] = [512, 514, 515, 520, 521, 522, 544, 705, 708, 709];
     for (h1, h2) in actual_res.flat_iter().zip(expected_res.iter()) {
         assert_eq!(h1, *h2);
@@ -336,8 +333,7 @@ fn testok_cone_approx_custom_bmoc_2() {
     // let res = cone_overlap_approx(6, 160.771389_f64.to_radians(), 64.3813_f64.to_radians(), 0.8962_f64.to_radians());
     let actual_res = get(3).cone_coverage_approx_custom(
         2,
-        36.80105218_f64.to_radians(),
-        56.78028536_f64.to_radians(),
+        Degrees(36.80105218, 56.78028536),
         14.93_f64.to_radians(),
     );
     let expected_res: [u64; 22] = [
@@ -360,8 +356,7 @@ fn testok_cone_approx_custom_bmoc_2() {
 fn testok_cone_approx_custom_bmoc() {
     let actual_res = get(3).cone_coverage_approx_custom(
         2,
-        13.158329_f64.to_radians(),
-        -72.80028_f64.to_radians(),
+        Degrees(13.158329, -72.80028),
         5.64323_f64.to_radians(),
     );
     let expected_res: [u64; 8] = [514, 515, 520, 521, 522, 705, 708, 709];
@@ -375,8 +370,7 @@ fn testok_cone_approx_custom_bmoc() {
 fn testok_cone_approx_custom_bmoc_v2() {
     let actual_res = get(6).cone_coverage_approx_custom(
         3,
-        8.401978_f64.to_radians(),
-        84.675171_f64.to_radians(),
+        Degrees(8.401978, 84.675171),
         0.0008_f64.to_radians(),
     );
     /*for cell in actual_res.flat_iter() {
@@ -392,8 +386,7 @@ fn testok_cone_approx_custom_bmoc_v2() {
 
     let actual_res = get(6).cone_coverage_approx_custom(
         3,
-        8.401978_f64.to_radians(),
-        84.675171_f64.to_radians(),
+        Degrees(8.401978, 84.675171),
         0.0004_f64.to_radians(),
     );
     /*for cell in actual_res.flat_iter() {
@@ -407,12 +400,8 @@ fn testok_cone_approx_custom_bmoc_v2() {
 
 #[test]
 fn testok_cone_approx_custom_bmoc_dbg() {
-    let actual_res = get(2).cone_coverage_approx_custom(
-        1,
-        20_f64.to_radians(),
-        0.0_f64.to_radians(),
-        50.0_f64.to_radians(),
-    );
+    let actual_res =
+        get(2).cone_coverage_approx_custom(1, Degrees(20.0, 0.0), 50.0_f64.to_radians());
     let expected_res: [u64; 50] = [
         0, 1, 2, 3, 4, 6, 8, 9, 10, 11, 12, 49, 52, 53, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74,
         75, 76, 77, 78, 79, 82, 88, 89, 90, 91, 94, 131, 134, 135, 136, 137, 138, 139, 140, 141,
@@ -2006,7 +1995,7 @@ fn testok_zone_1() {
         4538, 4539, 4540, 4542, 4543, 4864, 4865, 4867, 4868, 4869, 4870, 4871, 4876, 4877, 4879,
         4880, 4881, 4882, 4883, 4884, 4885, 4886, 4887, 4888, 4889, 4890, 4891, 4892, 4912,
     ];
-    let actual_res_exact = get(depth).zone_coverage(lon_min, lat_min, lon_max, lat_max);
+    let actual_res_exact = get(depth).zone_coverage([lon_min, lat_min], [lon_max, lat_max]);
     // to_aladin_moc(&actual_res_exact);
     assert!(actual_res_exact.deep_size() > 0);
     // assert_eq!(expected_res_exact.len(), actual_res_exact.deep_size());
@@ -2033,7 +2022,7 @@ fn testok_zone_2() {
         64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 113, 116, 117, 118, 119,
         125, 139, 142, 183, 187, 188, 189, 190, 191,
     ];
-    let actual_res_exact = get(depth).zone_coverage(lon_min, lat_min, lon_max, lat_max);
+    let actual_res_exact = get(depth).zone_coverage([lon_min, lat_min], [lon_max, lat_max]);
     // to_aladin_moc(&actual_res_exact);
     assert!(actual_res_exact.deep_size() > 0);
     assert_eq!(expected_res_exact.len(), actual_res_exact.deep_size());
@@ -2062,7 +2051,7 @@ fn testok_zone_3() {
         724, 725, 726, 728, 729, 730, 739, 740, 741, 742, 744, 745, 746, 959, 975, 979, 980, 981,
         982, 984, 985, 986, 995, 996, 997, 998, 1000, 1001, 1002,
     ];
-    let actual_res_exact = get(depth).zone_coverage(lon_min, lat_min, lon_max, lat_max);
+    let actual_res_exact = get(depth).zone_coverage([lon_min, lat_min], [lon_max, lat_max]);
     // to_aladin_moc(&actual_res_exact);
     assert!(actual_res_exact.deep_size() > 0);
     assert_eq!(expected_res_exact.len(), actual_res_exact.deep_size());
@@ -2092,7 +2081,7 @@ fn testok_zone_4() {
         11313, 11314, 11315, 11316, 11320, 11329, 11330, 11331, 11332, 11336, 11393, 11394, 11395,
         11396, 11400,
     ];
-    let actual_res_exact = get(depth).zone_coverage(lon_min, lat_min, lon_max, lat_max);
+    let actual_res_exact = get(depth).zone_coverage([lon_min, lat_min], [lon_max, lat_max]);
     // to_aladin_moc(&actual_res_exact);
     assert!(actual_res_exact.deep_size() > 0);
     assert_eq!(expected_res_exact.len(), actual_res_exact.deep_size());
@@ -2121,7 +2110,7 @@ fn testok_zone_5() {
         228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 240, 241, 242, 318, 319, 445, 447,
         509, 510, 511,
     ];
-    let actual_res_exact = get(depth).zone_coverage(lon_min, lat_min, lon_max, lat_max);
+    let actual_res_exact = get(depth).zone_coverage([lon_min, lat_min], [lon_max, lat_max]);
     // to_aladin_moc(&actual_res_exact);
     assert!(actual_res_exact.deep_size() > 0);
     // assert_eq!(expected_res_exact.len(), actual_res_exact.deep_size());
@@ -2160,7 +2149,7 @@ fn testok_zone_6() {
     ];
 
     // println!("Zone: (0, -90) -> (180, 0)");
-    let actual_res_exact = get(depth).zone_coverage(lon_min, lat_min, lon_max, lat_max);
+    let actual_res_exact = get(depth).zone_coverage([lon_min, lat_min], [lon_max, lat_max]);
     // to_aladin_moc(&actual_res_exact);
     assert!(actual_res_exact.deep_size() > 0);
     assert_eq!(expected_res_exact.len(), actual_res_exact.deep_size());
@@ -2200,7 +2189,7 @@ fn testok_zone_7() {
         4604, 4605, 4606, 4607, 4948, 4949, 4951,
     ];
 
-    let actual_res_exact = get(depth).zone_coverage(lon_min, lat_min, lon_max, lat_max);
+    let actual_res_exact = get(depth).zone_coverage([lon_min, lat_min], [lon_max, lat_max]);
     // to_aladin_moc(&actual_res_exact);
 
     assert!(actual_res_exact.deep_size() > 0);
@@ -2276,7 +2265,7 @@ fn testok_zone_8() {
         4088, 4089, 4090, 4091, 4092, 4093, 4094, 4095,
     ];
 
-    let actual_res_exact = get(depth).zone_coverage(lon_min, lat_min, lon_max, lat_max);
+    let actual_res_exact = get(depth).zone_coverage([lon_min, lat_min], [lon_max, lat_max]);
     // to_aladin_moc(&actual_res_exact);
 
     assert!(actual_res_exact.deep_size() > 0);
@@ -2335,7 +2324,7 @@ fn testok_zone_9() {
         11587, 11588, 11589, 11590, 11591, 11600, 11601, 11602, 11603, 11604, 11605, 11606, 11607,
         11612, 11613, 11615,
     ];
-    let actual_res_exact = get(depth).zone_coverage(lon_min, lat_min, lon_max, lat_max);
+    let actual_res_exact = get(depth).zone_coverage([lon_min, lat_min], [lon_max, lat_max]);
 
     // to_aladin_moc(&actual_res_exact);
 
@@ -2395,7 +2384,7 @@ fn testok_zone_10() {
         10793, 10794, 10795, 10880, 10881, 10882, 10883, 10888, 10889, 10890, 10891, 10912, 10913,
         10914, 10915, 10920, 10921, 10922, 10923, 10924, 10926, 10927,
     ];
-    let actual_res_exact = get(depth).zone_coverage(lon_min, lat_min, lon_max, lat_max);
+    let actual_res_exact = get(depth).zone_coverage([lon_min, lat_min], [lon_max, lat_max]);
     // to_aladin_moc(&actual_res_exact);
 
     assert!(actual_res_exact.deep_size() > 0);
@@ -2516,7 +2505,7 @@ fn testok_zone_11() {
         11255, 11256, 11257, 11258, 11259, 11260, 11261, 11262, 11263, 12255, 12271, 12275, 12276,
         12277, 12278, 12279, 12280, 12281, 12282, 12283, 12284, 12285, 12286, 12287,
     ];
-    let actual_res_exact = get(depth).zone_coverage(lon_min, lat_min, lon_max, lat_max);
+    let actual_res_exact = get(depth).zone_coverage([lon_min, lat_min], [lon_max, lat_max]);
     // to_aladin_moc(&actual_res_exact);
 
     assert!(actual_res_exact.deep_size() > 0);
@@ -2549,8 +2538,7 @@ fn to_degrees(lonlats: &mut [(f64, f64)]) {
 fn testok_bmoc_not() {
     let actual_res = get(3).cone_coverage_approx_custom(
         4,
-        36.80105218_f64.to_radians(),
-        56.78028536_f64.to_radians(),
+        Degrees(36.80105218, 56.78028536),
         14.93_f64.to_radians(),
     );
     /*println!("@@@@@ HIERARCH VIEW");

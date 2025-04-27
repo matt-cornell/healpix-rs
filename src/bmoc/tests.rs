@@ -1,4 +1,5 @@
 use super::*;
+use crate::coords::Degrees;
 use crate::get;
 
 #[test]
@@ -163,13 +164,13 @@ fn test_ok_bmoc_xor_minus_coherency() {
 
 #[test]
 fn test_ok_bmoc_not() {
-    let lon = 13.158329_f64.to_radians();
-    let lat = -72.80028_f64.to_radians();
+    let lon = 13.158329;
+    let lat = -72.80028;
     let radius = 5.64323_f64.to_radians();
     let depth = 6;
     let delta_depth = 5;
 
-    let bmoc = get(depth).cone_coverage_approx_custom(delta_depth, lon, lat, radius);
+    let bmoc = get(depth).cone_coverage_approx_custom(delta_depth, Degrees(lon, lat), radius);
 
     let not_bmoc = bmoc.not();
 

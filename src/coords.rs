@@ -3,7 +3,7 @@
 use std::f64::consts::{FRAC_PI_2, TAU};
 
 /// A longitude-latitude pair of coordinates. Normalizes and handles conversions between `f32` and `f64`.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct LonLat {
     pub lon: f64,
     pub lat: f64,
@@ -147,7 +147,7 @@ impl LonLatT for [f32; 2] {
 }
 
 /// A longitude-latitude pair in degrees.
-#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, PartialOrd)]
 pub struct Degrees(pub f64, pub f64);
 impl LonLatT for Degrees {
     fn lon(&self) -> f64 {

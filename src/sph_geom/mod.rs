@@ -6,8 +6,9 @@ pub(crate) mod coo3d;
 pub(crate) mod frame;
 pub(crate) mod zone;
 
-use self::coo3d::{Coo3D, UnitVect3, Vec3, Vect3, cross_product, dot_product};
+use self::coo3d::{UnitVect3, Vec3, Vect3, cross_product, dot_product};
 use crate::coords::{LonLat, LonLatT};
+pub use coo3d::Coo3D;
 use std::f64::consts::{PI, TAU};
 
 trait ContainsSouthPoleComputer {
@@ -62,9 +63,11 @@ impl ContainsSouthPoleComputer for Basic {
 static PROVIDED_TRUE: ProvidedTrue = ProvidedTrue;
 static PROVIDED_FALSE: ProvidedFalse = ProvidedFalse;
 static BASIC: Basic = Basic;
-// Gravity center of the 3 first vertices?
 
+// Gravity center of the 3 first vertices?
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub enum ContainsSouthPoleMethod {
+    #[default]
     Default,
     DefaultComplement,
     ContainsSouthPole,
@@ -103,12 +106,13 @@ impl ContainsSouthPoleComputer for ContainsSouthPoleMethod {
     }
 }
 
-pub struct Polygon {
+pub(crate) struct Polygon {
     vertices: Box<[Coo3D]>,
     cross_products: Box<[Vect3]>,
     contains_south_pole: bool,
 }
 
+#[allow(dead_code)]
 impl Polygon {
     pub fn new(vertices: Box<[LonLat]>) -> Polygon {
         Polygon::new_custom(vertices, &ContainsSouthPoleMethod::Default)

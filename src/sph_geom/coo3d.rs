@@ -30,11 +30,6 @@ pub trait Vec3 {
         self.x() * other.x() + self.y() * other.y() + self.z() * other.z()
     }
 
-    fn lonlat(&self) -> (f64, f64) {
-        // lonlat_of(Vec3::x(self), Vec3::y(self), Vec3::z(self))
-        lonlat_of(self.x(), self.y(), self.z())
-    }
-
     fn opposite(&self) -> Self
     where
         Self: Sized,
@@ -44,10 +39,6 @@ pub trait Vec3 {
 
     fn squared_euclidean_dist<V: Vec3>(&self, other: &V) -> f64 {
         pow2(self.x() - other.x()) + pow2(self.y() - other.y()) + pow2(self.z() - other.z())
-    }
-
-    fn euclidean_dist<V: Vec3>(&self, other: &V) -> f64 {
-        self.squared_euclidean_dist(other).sqrt()
     }
 
     #[inline]
@@ -147,14 +138,6 @@ pub trait UnitVec3: Vec3 {
                 y: norm_inv * (self.y() + other.y()),
                 z: norm_inv * (self.z() + other.z()),
             }
-        }
-    }
-
-    fn to_struct(&self) -> UnitVect3 {
-        UnitVect3 {
-            x: self.x(),
-            y: self.y(),
-            z: self.z(),
         }
     }
 
@@ -374,7 +357,7 @@ pub fn vec3_of(lon: f64, lat: f64) -> UnitVect3 {
 
 // Specific Coo3D
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Coo3D {
     x: f64,
     y: f64,
@@ -384,11 +367,11 @@ pub struct Coo3D {
 }
 
 impl Coo3D {
-    pub fn from<T: UnitVec3>(v: T) -> Coo3D {
+    pub(crate) fn from<T: UnitVec3>(v: T) -> Coo3D {
         Coo3D::from_vec3(v.x(), v.y(), v.z())
     }
 
-    pub fn from_ref<T: UnitVec3>(v: &T) -> Coo3D {
+    pub(crate) fn from_ref<T: UnitVec3>(v: &T) -> Coo3D {
         Coo3D::from_vec3(v.x(), v.y(), v.z())
     }
 

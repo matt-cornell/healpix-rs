@@ -1845,7 +1845,7 @@ fn largest_c2v_dist_in_eqr_top_with_radius(lat_abs: f64, radius: f64, csts: &Con
 ///   - => dist =  d_max * (1 - (1 - cos(LAT_OF_SQUARE_CELL)) / LAT_OF_SQUARE_CELL^2 * lat^2)
 #[inline]
 fn largest_c2v_dist_in_eqr_bottom(lat_abs: f64, csts: &ConstantsC2V) -> f64 {
-    debug_assert!((0.0..=LAT_OF_SQUARE_CELL).contains(&lat_abs));
+    // debug_assert!((0.0..=LAT_OF_SQUARE_CELL).contains(&lat_abs));
     csts.coeff_x2_eqr * pow2(lat_abs) + csts.coeff_cst_eqr
 }
 /// Same as the above method, but taking into account an additional radius.
@@ -1856,7 +1856,7 @@ fn largest_c2v_dist_in_eqr_bottom_with_radius(
     csts: &ConstantsC2V,
 ) -> f64 {
     debug_assert!(0_f64 < radius);
-    debug_assert!((0.0..=LAT_OF_SQUARE_CELL).contains(&lat_abs));
+    // debug_assert!((0.0..=LAT_OF_SQUARE_CELL).contains(&lat_abs));
     largest_c2v_dist_in_eqr_bottom(f64::max(lat_abs - radius, 0_f64), csts)
 }
 

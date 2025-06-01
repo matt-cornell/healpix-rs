@@ -412,6 +412,47 @@ impl<'a> BorrowedBmoc<'a> {
     }
 }
 
+/// A "BMOC" that only contains a single entry.
+///
+/// It will always have a maximum depth of the [`MAX_DEPTH`](crate::MAX_DEPTH), and can only contain one cell.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct SingleCell {
+    /// Raw value for the entry.
+    pub raw: u64,
+}
+impl SingleCell {
+    /// Create a [`SingleCell`] from a given depth, and hash.
+    #[inline(always)]
+    pub const fn new(depth: u8, hash: u64, is_full: bool) -> Self {
+        Self {
+            raw: encode_raw_value(depth, hash, is_full, crate::MAX_DEPTH),
+        }
+    }
+    /// Create a fully filled [`SingleCell`] at a given depth and hash.
+    #[inline(always)]
+    pub const fn full(depth: u8, hash: u64) -> Self {
+        Self::new(depth, hash, true)
+    }
+    /// Create a partially filled [`SingleCell`] at a given depth and hash.
+    #[inline(always)]
+    pub const fn partial(depth: u8, hash: u64) -> Self {
+        Self::new(depth, hash, false)
+    }
+    /// Decode the raw value into a [`Cell`].
+    #[inline(always)]
+    pub const fn decode(self) -> Cell {
+        Cell::decode(self.raw, crate::MAX_DEPTH)
+    }
+}
+impl Bmoc for SingleCell {
+    fn max_depth(&self) -> u8 {
+        crate::MAX_DEPTH
+    }
+    fn entries(&self) -> &[u64] {
+        std::slice::from_ref(&self.raw)
+    }
+}
+
 /// Whether or not a point is inside the MOC
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Status {

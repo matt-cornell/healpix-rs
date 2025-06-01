@@ -176,11 +176,11 @@ fn test_ok_bmoc_not() {
 
     println!("BMOC");
     for (flag, range) in bmoc.flagged_ranges() {
-        println!("flag: {}; range: {:?}", flag, range);
+        println!("flag: {flag}; range: {range:?}");
     }
     println!("NOT BMOC");
     for (flag, range) in not_bmoc.flagged_ranges() {
-        println!("flag: {}; range: {:?}", flag, range);
+        println!("flag: {flag}; range: {range:?}");
     }
     // Asssert that the first range has the flag 'true'.
     assert!(not_bmoc.flagged_ranges().next().unwrap().0);

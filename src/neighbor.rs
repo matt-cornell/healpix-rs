@@ -911,13 +911,13 @@ fn npc_egde_direction_from_neighbor(
     match neighbor_direction {
         Direction::E => match inner_direction {
             Direction::N | Direction::NE => Direction::N,
-            Direction::E => panic!("No neighbor in direction {:?}", neighbor_direction),
+            Direction::E => panic!("No neighbor in direction {neighbor_direction:?}"),
             Direction::S | Direction::SE => neighbor_direction.opposite(),
             _ => unreachable!(),
         },
         Direction::W => match inner_direction {
             Direction::N | Direction::NW => Direction::N,
-            Direction::W => panic!("No neighbor in direction {:?}", neighbor_direction),
+            Direction::W => panic!("No neighbor in direction {neighbor_direction:?}"),
             Direction::S | Direction::SW => neighbor_direction.opposite(),
             _ => unreachable!(),
         },
@@ -953,13 +953,13 @@ fn spc_edge_direction_from_neighbor(
     match neighbor_direction {
         Direction::E => match inner_direction {
             Direction::S | Direction::SE => Direction::S,
-            Direction::E => panic!("No neighbor in direction {:?}", neighbor_direction),
+            Direction::E => panic!("No neighbor in direction {neighbor_direction:?}"),
             Direction::N | Direction::NE => neighbor_direction.opposite(),
             _ => unreachable!(),
         },
         Direction::W => match inner_direction {
             Direction::S | Direction::SW => Direction::S,
-            Direction::W => panic!("No neighbor in direction {:?}", neighbor_direction),
+            Direction::W => panic!("No neighbor in direction {neighbor_direction:?}"),
             Direction::N | Direction::NW => neighbor_direction.opposite(),
             _ => unreachable!(),
         },
@@ -999,7 +999,7 @@ pub fn direction_from_neighbor(base_cell: u8, neighbor_direction: Direction) -> 
 fn npc_direction_from_neighbor(neighbor_direction: Direction) -> Direction {
     match neighbor_direction {
         Direction::E | Direction::W => {
-            panic!("No neighbor in direction {:?}", neighbor_direction)
+            panic!("No neighbor in direction {neighbor_direction:?}")
         }
         Direction::NE => Direction::NW,
         Direction::NW => Direction::NE,
@@ -1011,7 +1011,7 @@ fn npc_direction_from_neighbor(neighbor_direction: Direction) -> Direction {
 fn eqr_direction_from_neighbor(neighbor_direction: Direction) -> Direction {
     match neighbor_direction {
         Direction::S | Direction::N => {
-            panic!("No neighbor in direction {:?}", neighbor_direction)
+            panic!("No neighbor in direction {neighbor_direction:?}")
         }
         _ => neighbor_direction.opposite(),
     }
@@ -1020,7 +1020,7 @@ fn eqr_direction_from_neighbor(neighbor_direction: Direction) -> Direction {
 fn spc_direction_from_neighbor(neighbor_direction: Direction) -> Direction {
     match neighbor_direction {
         Direction::E | Direction::W => {
-            panic!("No neighbor in direction {:?}", neighbor_direction)
+            panic!("No neighbor in direction {neighbor_direction:?}")
         }
         Direction::S => Direction::S,
         Direction::SE => Direction::SW,

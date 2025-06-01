@@ -442,7 +442,7 @@ fn testok_conefullin_bmoc_dbg() {
     let radius = 5.64323_f64;
     let actual_res = get(depth).cone_coverage_fullin(Degrees(lon, lat), radius.to_radians());
     let expected_res: [u64; 2] = [2081, 2082];
-    println!("draw red circle({} {} {}deg)", lon, lat, radius);
+    println!("draw red circle({lon} {lat} {radius}deg)");
     to_aladin_moc(&actual_res);
     assert_eq!(actual_res.flat_iter().deep_size(), expected_res.len());
     for (h1, h2) in actual_res.flat_iter().zip(expected_res.iter()) {
@@ -512,7 +512,7 @@ fn testok_ring_bmoc() {
 fn to_aladin_moc(bmoc: &dyn Bmoc) {
     print!("draw moc {}/", bmoc.max_depth());
     for cell in bmoc.flat_iter() {
-        print!("{}, ", cell);
+        print!("{cell}, ");
     }
 }
 
@@ -525,7 +525,7 @@ fn testok_polygone_approx() {
     }*/
     println!("@@@@@ FLAT VIEW");
     for cell in actual_res.flat_iter() {
-        println!("@@@@@ cell a: {:?}", cell);
+        println!("@@@@@ cell a: {cell:?}");
     }
 }
 
@@ -744,7 +744,7 @@ fn testok_polygone_exact_3() {
 
     println!("@@@@@ FLAT VIEW");
     for cell in actual_res_exact.flat_iter() {
-        println!("@@@@@ cell a: {:?}", cell);
+        println!("@@@@@ cell a: {cell:?}");
     }
 
     assert!(actual_res_exact.deep_size() > 0);
@@ -2717,7 +2717,7 @@ fn test_bilinear_interpolation_3() {
     let depth = 5;
     for (lon, lat) in lon_rad.into_iter().zip(lat_rad) {
         let res = get(depth).bilinear_interpolation(Degrees(lon, lat));
-        println!("{:?}", res);
+        println!("{res:?}");
     }
 }
 
@@ -2742,7 +2742,7 @@ fn test_gen_file() -> std::io::Result<()> {
         ));
     }
 
-    let mut file = std::fs::File::create(format!("hpx.{}.csv", depth))?;
+    let mut file = std::fs::File::create(format!("hpx.{depth}.csv"))?;
     file.write_all(s.as_bytes())?;
     Ok(())
 }

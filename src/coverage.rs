@@ -697,9 +697,7 @@ impl super::Layer {
         assert!(cone_radius_ext <= PI);
         assert!(
             cone_radius_int < cone_radius_ext,
-            "{} >= {} ",
-            cone_radius_int,
-            cone_radius_ext
+            "{cone_radius_int} >= {cone_radius_ext} "
         );
         // Common variable
         let cos_cone_lat = cone_lat.cos();
@@ -1278,24 +1276,20 @@ impl super::Layer {
     fn box2polygon(lon: f64, lat: f64, a: f64, b: f64, pa: f64) -> Vec<(f64, f64)> {
         assert!(
             (0.0..TAU).contains(&lon),
-            "Expected: lon in [0, 2pi[. Actual: {}",
-            lon
+            "Expected: lon in [0, 2pi[. Actual: {lon}"
         );
         assert!(
             (-FRAC_PI_2..=FRAC_PI_2).contains(&lat),
-            "Expected: lat in [-pi/2, pi/2]. Actual: {}",
-            lat
+            "Expected: lat in [-pi/2, pi/2]. Actual: {lat}"
         );
         assert!(
             0.0 < a && a <= FRAC_PI_2,
-            "Expected: a in ]0, pi/2]. Actual: {}",
-            a
+            "Expected: a in ]0, pi/2]. Actual: {a}"
         );
-        assert!(0.0 < b && b <= a, "Expected: b in ]0, a]. Actual: {}", b);
+        assert!(0.0 < b && b <= a, "Expected: b in ]0, a]. Actual: {b}");
         assert!(
             (0.0..PI).contains(&pa),
-            "Expected: pa in [0, pi[. Actual: {}",
-            pa
+            "Expected: pa in [0, pi[. Actual: {pa}"
         );
         // Compute spherical coordinates
         let frame_rotation = RefToLocalRotMatrix::from_center(lon, lat);

@@ -298,7 +298,7 @@ impl<I: Iterator<Item = u64>> Iterator for RangeIter<I> {
                         if self.prev_min != self.prev_max {
                             res = Some(self.prev_min..self.prev_max);
                         }
-                        self.prev_min = self.prev_max;
+                        self.prev_min = range.start;
                     }
                     self.prev_max = range.end;
                 } else if cell.hash == self.prev_max {
@@ -320,7 +320,11 @@ impl<I: Iterator<Item = u64>> Iterator for RangeIter<I> {
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        (1, self.raw_val_iter.size_hint().1.map(|h| h + 1))
+        let (mut min, max) = self.raw_val_iter.size_hint();
+        if min == 0 && self.prev_min != self.prev_max {
+            min = 1;
+        }
+        (min, max.map(|v| v + 1))
     }
 }
 
@@ -356,16 +360,18 @@ impl<I: Iterator<Item = u64>> Iterator for FlaggedRangeIter<I> {
                 if cell.depth < self.max_depth {
                     let range = crate::to_range(cell.hash, self.max_depth - cell.depth);
                     if range.start == self.prev_max
-                        || !(self.prev_max == 0 || cell.is_full == *prev_flag)
+                        && (self.prev_max == 0 || cell.is_full == *prev_flag)
                     {
+                        self.prev_max = range.end;
+                    } else {
                         if self.prev_min != self.prev_max {
                             res = Some((*prev_flag, self.prev_min..self.prev_max));
                         }
                         self.prev_min = range.start;
+                        self.prev_max = range.end;
                         *prev_flag = cell.is_full;
                     }
-                    self.prev_max = range.end;
-                } else if cell.hash == self.prev_max && *prev_flag {
+                } else if cell.hash == self.prev_max && cell.is_full == *prev_flag {
                     self.prev_max += 1;
                 } else {
                     if self.prev_min != self.prev_max {
@@ -383,5 +389,13 @@ impl<I: Iterator<Item = u64>> Iterator for FlaggedRangeIter<I> {
                 self.prev_min = self.prev_max;
                 res
             })
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let (mut min, max) = self.raw_val_iter.size_hint();
+        if min == 0 && self.prev_min != self.prev_max {
+            min = 1;
+        }
+        (min, max.map(|v| v + 1))
     }
 }

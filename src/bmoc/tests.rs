@@ -163,6 +163,34 @@ fn test_ok_bmoc_xor_minus_coherency() {
 }
 
 #[test]
+fn test_ok_bmoc_minus_mixed_order_full_descendant() {
+    // Regression test for an infinite loop in `minus` (difference).
+    //
+    // When the left cell is a *finer* full descendant of a *coarser* full
+    // right cell (l.depth > r.depth, hl_at_dr == r.hash, and both `is_full`),
+    // the `Ordering::Greater` arm previously had no terminal `else`, so neither
+    // iterator cursor advanced and the merge spun forever. This only surfaced
+    // on mixed-order inputs (equal-depth inputs take the `Ordering::Equal` arm).
+    //
+    // Build left = two depth-2 full cells that are both children of base cell 0,
+    // right = the depth-0 full cell 0 (their common coarse ancestor).
+    let mut left = MutableBmoc::<false>::with_capacity(2, 2);
+    left.push_unchecked(2, 0, true);
+    left.push_unchecked(2, 1, true);
+    let left = left.into_packed();
+    let mut right = MutableBmoc::<false>::with_capacity(2, 1);
+    right.push_unchecked(0, 0, true);
+    let right = right.into_packed();
+
+    // Full descendants minus their full ancestor => empty. (Must terminate.)
+    let diff = left.minus(&right);
+    assert_eq!(diff, MutableBmoc::new_empty(2));
+
+    // And it agrees with the documented identity A MINUS B == A AND NOT(B).
+    assert_eq!(diff, left.and(&right.not()));
+}
+
+#[test]
 fn test_ok_bmoc_not() {
     let lon = 13.158329;
     let lat = -72.80028;

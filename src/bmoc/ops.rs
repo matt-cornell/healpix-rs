@@ -5,7 +5,6 @@ type CellIter<'a> = iter::CellIter<iter::SliceIter<'a>>;
 
 #[inline(never)]
 pub fn not(max_depth: u8, entries: &[u64]) -> MutableBmoc {
-    println!("not()");
     // Worst case: only 1 sub-cell by cell in the MOC (+11 for depth 0)
     let mut builder = MutableBmoc::<false>::with_capacity(max_depth, 3 * entries.len() + 12);
     // Empty MOC, easy
@@ -422,6 +421,14 @@ pub fn minus(lhs: BorrowedBmoc, rhs: BorrowedBmoc) -> MutableBmoc {
                 } else if !r.is_full || !l.is_full {
                     debug_assert_eq!(hl_at_dr, r.hash);
                     builder.push_unchecked(l.depth, l.hash, false);
+                    left = it_left.next();
+                } else {
+                    // hl_at_dr == r.hash && r.is_full && l.is_full:
+                    // the finer left cell is fully covered by the coarser full
+                    // right cell, so `l - r` is empty. Drop `l` and advance left;
+                    // keep `r`, since it may still cover further fine left cells.
+                    // (Without this branch neither cursor advanced => infinite loop.)
+                    debug_assert_eq!(hl_at_dr, r.hash);
                     left = it_left.next();
                 }
             }
